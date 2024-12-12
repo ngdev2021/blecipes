@@ -1,6 +1,10 @@
 import { motion } from "framer-motion";
 import { SearchBar } from "@/components/SearchBar";
 import { RecipeCard } from "@/components/RecipeCard";
+import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { LogOut } from "lucide-react";
 
 const featuredRecipes = [
   {
@@ -27,10 +31,27 @@ const featuredRecipes = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
   return (
     <div className="min-h-screen bg-cream">
       <header className="relative flex min-h-[60vh] items-center justify-center bg-[url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center">
         <div className="absolute inset-0 bg-black/40" />
+        <div className="absolute top-4 right-4 z-20">
+          <Button
+            variant="outline"
+            className="bg-white/90 hover:bg-white"
+            onClick={handleLogout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </Button>
+        </div>
         <div className="relative z-10 text-center text-white">
           <motion.h1
             initial={{ opacity: 0, y: -20 }}
