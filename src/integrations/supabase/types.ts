@@ -9,63 +9,80 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      categories: {
-        Row: {
-          created_at: string | null
-          description: string | null
-          id: string
-          name: string
-        }
-        Insert: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name: string
-        }
-        Update: {
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-        }
-        Relationships: []
-      }
       ingredients: {
         Row: {
-          created_at: string | null
-          id: string
+          id: number
           name: string
+          notes: string | null
+          quantity: number | null
+          recipe_id: number | null
+          sourcing_info: Json | null
+          substitutions: Json | null
+          type: string | null
+          unit: string | null
         }
         Insert: {
-          created_at?: string | null
-          id?: string
+          id?: number
           name: string
+          notes?: string | null
+          quantity?: number | null
+          recipe_id?: number | null
+          sourcing_info?: Json | null
+          substitutions?: Json | null
+          type?: string | null
+          unit?: string | null
         }
         Update: {
-          created_at?: string | null
-          id?: string
+          id?: number
           name?: string
+          notes?: string | null
+          quantity?: number | null
+          recipe_id?: number | null
+          sourcing_info?: Json | null
+          substitutions?: Json | null
+          type?: string | null
+          unit?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "ingredients_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       instructions: {
         Row: {
-          id: string
+          id: number
           instruction: string
-          recipe_id: string | null
-          step_number: number
+          media: Json | null
+          recipe_id: number | null
+          step: number
+          timer: Json | null
+          tip: string | null
+          troubleshooting: string | null
         }
         Insert: {
-          id?: string
+          id?: number
           instruction: string
-          recipe_id?: string | null
-          step_number: number
+          media?: Json | null
+          recipe_id?: number | null
+          step: number
+          timer?: Json | null
+          tip?: string | null
+          troubleshooting?: string | null
         }
         Update: {
-          id?: string
+          id?: number
           instruction?: string
-          recipe_id?: string | null
-          step_number?: number
+          media?: Json | null
+          recipe_id?: number | null
+          step?: number
+          timer?: Json | null
+          tip?: string | null
+          troubleshooting?: string | null
         }
         Relationships: [
           {
@@ -77,228 +94,246 @@ export type Database = {
           },
         ]
       }
-      ratings: {
+      meal_plans: {
         Row: {
-          comment: string | null
           created_at: string | null
-          id: string
-          rating: number | null
-          recipe_id: string | null
+          id: number
+          recipes: Json | null
+          schedule: Json | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          comment?: string | null
           created_at?: string | null
-          id?: string
-          rating?: number | null
-          recipe_id?: string | null
+          id?: number
+          recipes?: Json | null
+          schedule?: Json | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          comment?: string | null
           created_at?: string | null
-          id?: string
-          rating?: number | null
-          recipe_id?: string | null
+          id?: number
+          recipes?: Json | null
+          schedule?: Json | null
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "ratings_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      recipe_categories: {
+      pairings: {
         Row: {
-          category_id: string
-          recipe_id: string
-        }
-        Insert: {
-          category_id: string
-          recipe_id: string
-        }
-        Update: {
-          category_id?: string
-          recipe_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "recipe_categories_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "categories"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipe_categories_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      recipe_ingredients: {
-        Row: {
-          amount: number | null
-          ingredient_id: string
+          id: number
           notes: string | null
-          recipe_id: string
-          unit: string | null
+          pairing_type: string
+          recipe_id: number | null
+          reference_id: number | null
         }
         Insert: {
-          amount?: number | null
-          ingredient_id: string
+          id?: number
           notes?: string | null
-          recipe_id: string
-          unit?: string | null
+          pairing_type: string
+          recipe_id?: number | null
+          reference_id?: number | null
         }
         Update: {
-          amount?: number | null
-          ingredient_id?: string
+          id?: number
           notes?: string | null
-          recipe_id?: string
-          unit?: string | null
+          pairing_type?: string
+          recipe_id?: number | null
+          reference_id?: number | null
         }
         Relationships: [
           {
-            foreignKeyName: "recipe_ingredients_ingredient_id_fkey"
-            columns: ["ingredient_id"]
+            foreignKeyName: "pairings_recipe_id_fkey"
+            columns: ["recipe_id"]
             isOneToOne: false
-            referencedRelation: "ingredients"
+            referencedRelation: "recipes"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "recipe_ingredients_recipe_id_fkey"
-            columns: ["recipe_id"]
+            foreignKeyName: "pairings_reference_id_fkey"
+            columns: ["reference_id"]
             isOneToOne: false
             referencedRelation: "recipes"
             referencedColumns: ["id"]
           },
         ]
       }
-      recipe_tags: {
+      profiles: {
         Row: {
-          recipe_id: string
-          tag_id: string
+          created_at: string | null
+          email: string
+          id: string
+          preferences: Json | null
+          updated_at: string | null
         }
         Insert: {
-          recipe_id: string
-          tag_id: string
+          created_at?: string | null
+          email: string
+          id: string
+          preferences?: Json | null
+          updated_at?: string | null
         }
         Update: {
-          recipe_id?: string
-          tag_id?: string
+          created_at?: string | null
+          email?: string
+          id?: string
+          preferences?: Json | null
+          updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "recipe_tags_recipe_id_fkey"
-            columns: ["recipe_id"]
-            isOneToOne: false
-            referencedRelation: "recipes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "recipe_tags_tag_id_fkey"
-            columns: ["tag_id"]
-            isOneToOne: false
-            referencedRelation: "tags"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       recipes: {
         Row: {
-          cook_time_minutes: number | null
+          atmosphere: Json | null
+          categories: Json | null
+          cook_time: number | null
           created_at: string | null
           description: string | null
-          difficulty: Database["public"]["Enums"]["difficulty_level"]
-          id: string
-          image_url: string | null
-          prep_time_minutes: number | null
-          search_vector: unknown | null
+          difficulty: string | null
+          difficulty_modifiers: Json | null
+          id: number
+          image: string | null
+          inspiration: string | null
+          is_seasonal: boolean | null
+          prep_time: number | null
+          regional_variations: Json | null
           servings: number | null
+          tags: Json | null
           title: string
-          total_time_minutes: number | null
+          total_time: number | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          cook_time_minutes?: number | null
+          atmosphere?: Json | null
+          categories?: Json | null
+          cook_time?: number | null
           created_at?: string | null
           description?: string | null
-          difficulty?: Database["public"]["Enums"]["difficulty_level"]
-          id?: string
-          image_url?: string | null
-          prep_time_minutes?: number | null
-          search_vector?: unknown | null
+          difficulty?: string | null
+          difficulty_modifiers?: Json | null
+          id?: number
+          image?: string | null
+          inspiration?: string | null
+          is_seasonal?: boolean | null
+          prep_time?: number | null
+          regional_variations?: Json | null
           servings?: number | null
+          tags?: Json | null
           title: string
-          total_time_minutes?: number | null
+          total_time?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          cook_time_minutes?: number | null
+          atmosphere?: Json | null
+          categories?: Json | null
+          cook_time?: number | null
           created_at?: string | null
           description?: string | null
-          difficulty?: Database["public"]["Enums"]["difficulty_level"]
-          id?: string
-          image_url?: string | null
-          prep_time_minutes?: number | null
-          search_vector?: unknown | null
+          difficulty?: string | null
+          difficulty_modifiers?: Json | null
+          id?: number
+          image?: string | null
+          inspiration?: string | null
+          is_seasonal?: boolean | null
+          prep_time?: number | null
+          regional_variations?: Json | null
           servings?: number | null
+          tags?: Json | null
           title?: string
-          total_time_minutes?: number | null
+          total_time?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
         Relationships: []
       }
-      tags: {
+      shopping_lists: {
         Row: {
           created_at: string | null
-          id: string
-          name: string
+          id: number
+          items: Json | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          id?: string
-          name: string
+          id?: number
+          items?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          id?: string
-          name?: string
+          id?: number
+          items?: Json | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
-      user_favorites: {
+      user_bookmarks: {
         Row: {
           created_at: string | null
-          recipe_id: string
-          user_id: string
+          id: number
+          recipe_id: number | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
-          recipe_id: string
-          user_id: string
+          id?: number
+          recipe_id?: number | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          recipe_id?: string
-          user_id?: string
+          id?: number
+          recipe_id?: number | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "user_favorites_recipe_id_fkey"
+            foreignKeyName: "user_bookmarks_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_ratings: {
+        Row: {
+          created_at: string | null
+          id: number
+          rating: number | null
+          recipe_id: number | null
+          review: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: number
+          rating?: number | null
+          recipe_id?: number | null
+          review?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: number
+          rating?: number | null
+          recipe_id?: number | null
+          review?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_ratings_recipe_id_fkey"
             columns: ["recipe_id"]
             isOneToOne: false
             referencedRelation: "recipes"

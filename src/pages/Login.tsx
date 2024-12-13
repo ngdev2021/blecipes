@@ -20,7 +20,7 @@ const Login = () => {
     <div className="min-h-screen bg-cream flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
         <h1 className="text-3xl font-playfair text-center mb-8 text-charcoal">
-          Welcome to Blecipe
+          Welcome to Recipe Mingle
         </h1>
         <Auth
           supabaseClient={supabase}
@@ -29,14 +29,27 @@ const Login = () => {
             variables: {
               default: {
                 colors: {
-                  brand: "#4A5D45", // sage green
-                  brandAccent: "#6B7F66",
+                  brand: "#8A9A5B", // sage green
+                  brandAccent: "#A4B573",
                 },
+              },
+            },
+            style: {
+              button: {
+                borderRadius: "6px",
+                height: "40px",
+              },
+              input: {
+                borderRadius: "6px",
+              },
+              anchor: {
+                color: "#8A9A5B",
               },
             },
           }}
           theme="light"
-          providers={[]}
+          providers={["google", "github"]}
+          redirectTo={window.location.origin}
         />
       </div>
     </div>
