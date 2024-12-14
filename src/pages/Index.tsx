@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { LogOut, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRef } from "react";
+import { importRecipes } from "@/utils/recipeImport";
 
 const featuredRecipes = [
   {
@@ -57,8 +58,21 @@ const Index = () => {
       
       let recipes;
       try {
-        recipes = JSON.parse(text);
-        console.log("Parsed recipes:", recipes);
+        const parsedContent = JSON.parse(text);
+        console.log("Parsed content:", parsedContent);
+        
+        // Handle both direct array and nested recipes array
+        recipes = Array.isArray(parsedContent) ? parsedContent : parsedContent.recipes;
+        
+        if (!Array.isArray(recipes)) {
+          console.error("Invalid format:", typeof recipes);
+          toast({
+            title: "Error",
+            description: "Invalid format. The file must contain an array of recipes or a recipes array property.",
+            variant: "destructive",
+          });
+          return;
+        }
       } catch (parseError) {
         console.error("JSON parse error:", parseError);
         toast({
@@ -69,56 +83,17 @@ const Index = () => {
         return;
       }
 
-      if (!Array.isArray(recipes)) {
-        console.error("Not an array:", typeof recipes);
+      const userId = (await supabase.auth.getUser()).data.user?.id;
+      if (!userId) {
         toast({
           title: "Error",
-          description: "The JSON file must contain an array of recipes",
+          description: "You must be logged in to import recipes.",
           variant: "destructive",
         });
         return;
       }
 
-      let successCount = 0;
-      let errorCount = 0;
-
-      for (const recipe of recipes) {
-        console.log("Processing recipe:", recipe);
-        const { error } = await supabase
-          .from("recipes")
-          .insert({
-            title: recipe.title || "Untitled Recipe",
-            description: recipe.description || "",
-            image: recipe.image || null,
-            prep_time: recipe.prep_time || null,
-            cook_time: recipe.cook_time || null,
-            total_time: recipe.total_time || null,
-            difficulty: recipe.difficulty || "medium",
-            servings: recipe.servings || null,
-            categories: recipe.categories || [],
-            tags: recipe.tags || [],
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-          });
-
-        if (error) {
-          console.error("Error inserting recipe:", error);
-          errorCount++;
-          toast({
-            title: "Error",
-            description: `Failed to import recipe: ${recipe.title || "Untitled Recipe"}`,
-            variant: "destructive",
-          });
-        } else {
-          successCount++;
-        }
-      }
-
-      if (successCount > 0) {
-        toast({
-          title: "Success",
-          description: `Successfully imported ${successCount} recipes${errorCount > 0 ? ` (${errorCount} failed)` : ''}`,
-        });
-      }
+      await importRecipes(recipes, userId);
     } catch (error) {
       console.error("Error processing file:", error);
       toast({
