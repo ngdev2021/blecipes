@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, Upload } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useRef } from "react";
 
 const featuredRecipes = [
@@ -51,10 +51,26 @@ const Index = () => {
     if (!file) return;
 
     try {
+      console.log("Reading file:", file.name);
       const text = await file.text();
-      const recipes = JSON.parse(text);
+      console.log("File content:", text);
+      
+      let recipes;
+      try {
+        recipes = JSON.parse(text);
+        console.log("Parsed recipes:", recipes);
+      } catch (parseError) {
+        console.error("JSON parse error:", parseError);
+        toast({
+          title: "Error",
+          description: "Invalid JSON format. Please check your file.",
+          variant: "destructive",
+        });
+        return;
+      }
 
       if (!Array.isArray(recipes)) {
+        console.error("Not an array:", typeof recipes);
         toast({
           title: "Error",
           description: "The JSON file must contain an array of recipes",
@@ -67,6 +83,7 @@ const Index = () => {
       let errorCount = 0;
 
       for (const recipe of recipes) {
+        console.log("Processing recipe:", recipe);
         const { error } = await supabase
           .from("recipes")
           .insert({
