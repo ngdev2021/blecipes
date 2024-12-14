@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogOut, Upload } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
-import { Tables } from "@/integrations/supabase/types";
+import { useRef } from "react";
 
 const featuredRecipes = [
   {
@@ -35,10 +35,15 @@ const featuredRecipes = [
 const Index = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/login");
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click();
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -115,21 +120,21 @@ const Index = () => {
       <header className="relative flex min-h-[60vh] items-center justify-center bg-[url('https://images.unsplash.com/photo-1556910103-1c02745aae4d?ixlib=rb-1.2.1&auto=format&fit=crop&w=2000&q=80')] bg-cover bg-center">
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute top-4 right-4 z-20 flex gap-4">
-          <label className="cursor-pointer">
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-            <Button
-              variant="outline"
-              className="bg-white/90 hover:bg-white"
-            >
-              <Upload className="mr-2 h-4 w-4" />
-              Import Recipes
-            </Button>
-          </label>
+          <input
+            type="file"
+            ref={fileInputRef}
+            accept=".json"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
+          <Button
+            variant="outline"
+            className="bg-white/90 hover:bg-white"
+            onClick={handleImportClick}
+          >
+            <Upload className="mr-2 h-4 w-4" />
+            Import Recipes
+          </Button>
           <Button
             variant="outline"
             className="bg-white/90 hover:bg-white"
