@@ -47,39 +47,56 @@ const Index = () => {
 
     try {
       const text = await file.text();
-      const recipes = JSON.parse(text) as Tables<"recipes">[];
+      const recipes = JSON.parse(text);
+
+      if (!Array.isArray(recipes)) {
+        toast({
+          title: "Error",
+          description: "The JSON file must contain an array of recipes",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      let successCount = 0;
+      let errorCount = 0;
 
       for (const recipe of recipes) {
         const { error } = await supabase
           .from("recipes")
           .insert({
-            title: recipe.title,
-            description: recipe.description,
-            image: recipe.image,
-            prep_time: recipe.prep_time,
-            cook_time: recipe.cook_time,
-            total_time: recipe.total_time,
-            difficulty: recipe.difficulty,
-            servings: recipe.servings,
-            categories: recipe.categories,
-            tags: recipe.tags,
+            title: recipe.title || "Untitled Recipe",
+            description: recipe.description || "",
+            image: recipe.image || null,
+            prep_time: recipe.prep_time || null,
+            cook_time: recipe.cook_time || null,
+            total_time: recipe.total_time || null,
+            difficulty: recipe.difficulty || "medium",
+            servings: recipe.servings || null,
+            categories: recipe.categories || [],
+            tags: recipe.tags || [],
             user_id: (await supabase.auth.getUser()).data.user?.id,
           });
 
         if (error) {
           console.error("Error inserting recipe:", error);
+          errorCount++;
           toast({
             title: "Error",
-            description: `Failed to import recipe: ${recipe.title}`,
+            description: `Failed to import recipe: ${recipe.title || "Untitled Recipe"}`,
             variant: "destructive",
           });
+        } else {
+          successCount++;
         }
       }
 
-      toast({
-        title: "Success",
-        description: `Successfully imported ${recipes.length} recipes`,
-      });
+      if (successCount > 0) {
+        toast({
+          title: "Success",
+          description: `Successfully imported ${successCount} recipes${errorCount > 0 ? ` (${errorCount} failed)` : ''}`,
+        });
+      }
     } catch (error) {
       console.error("Error processing file:", error);
       toast({
@@ -88,6 +105,9 @@ const Index = () => {
         variant: "destructive",
       });
     }
+
+    // Reset the file input
+    event.target.value = '';
   };
 
   return (
