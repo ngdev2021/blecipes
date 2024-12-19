@@ -4,7 +4,7 @@ import { RecipeCard } from "@/components/RecipeCard";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut, Upload } from "lucide-react";
+import { LogOut, Upload, Book } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useRef } from "react";
 import { importRecipes } from "@/utils/recipeImport";
@@ -119,6 +119,14 @@ const Index = () => {
             onChange={handleFileUpload}
             className="hidden"
           />
+          <Button
+            variant="outline"
+            className="bg-white/90 hover:bg-white"
+            onClick={() => navigate("/recipes")}
+          >
+            <Book className="mr-2 h-4 w-4" />
+            All Recipes
+          </Button>
           <Button
             variant="outline"
             className="bg-white/90 hover:bg-white"

@@ -9,6 +9,50 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      drinks: {
+        Row: {
+          alcohol_content: number | null
+          description: string | null
+          garnish: string | null
+          glass_type: string | null
+          id: number
+          ingredients: Json | null
+          instructions: Json | null
+          name: string
+          recipe_id: number | null
+        }
+        Insert: {
+          alcohol_content?: number | null
+          description?: string | null
+          garnish?: string | null
+          glass_type?: string | null
+          id?: number
+          ingredients?: Json | null
+          instructions?: Json | null
+          name: string
+          recipe_id?: number | null
+        }
+        Update: {
+          alcohol_content?: number | null
+          description?: string | null
+          garnish?: string | null
+          glass_type?: string | null
+          id?: number
+          ingredients?: Json | null
+          instructions?: Json | null
+          name?: string
+          recipe_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drinks_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredients: {
         Row: {
           id: number
@@ -250,6 +294,94 @@ export type Database = {
         }
         Relationships: []
       }
+      sauces: {
+        Row: {
+          consistency: string | null
+          description: string | null
+          flavor_profile: string | null
+          id: number
+          ingredients: Json | null
+          instructions: Json | null
+          name: string
+          recipe_id: number | null
+          storage_instructions: string | null
+        }
+        Insert: {
+          consistency?: string | null
+          description?: string | null
+          flavor_profile?: string | null
+          id?: number
+          ingredients?: Json | null
+          instructions?: Json | null
+          name: string
+          recipe_id?: number | null
+          storage_instructions?: string | null
+        }
+        Update: {
+          consistency?: string | null
+          description?: string | null
+          flavor_profile?: string | null
+          id?: number
+          ingredients?: Json | null
+          instructions?: Json | null
+          name?: string
+          recipe_id?: number | null
+          storage_instructions?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sauces_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      seasoning_blends: {
+        Row: {
+          cuisine_type: string | null
+          description: string | null
+          heat_level: string | null
+          id: number
+          ingredients: Json | null
+          instructions: Json | null
+          name: string
+          recipe_id: number | null
+          storage_instructions: string | null
+        }
+        Insert: {
+          cuisine_type?: string | null
+          description?: string | null
+          heat_level?: string | null
+          id?: number
+          ingredients?: Json | null
+          instructions?: Json | null
+          name: string
+          recipe_id?: number | null
+          storage_instructions?: string | null
+        }
+        Update: {
+          cuisine_type?: string | null
+          description?: string | null
+          heat_level?: string | null
+          id?: number
+          ingredients?: Json | null
+          instructions?: Json | null
+          name?: string
+          recipe_id?: number | null
+          storage_instructions?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "seasoning_blends_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shopping_lists: {
         Row: {
           created_at: string | null
@@ -276,6 +408,50 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      sides: {
+        Row: {
+          cooking_time: number | null
+          description: string | null
+          id: number
+          ingredients: Json | null
+          instructions: Json | null
+          name: string
+          notes: string | null
+          preparation_time: number | null
+          recipe_id: number | null
+        }
+        Insert: {
+          cooking_time?: number | null
+          description?: string | null
+          id?: number
+          ingredients?: Json | null
+          instructions?: Json | null
+          name: string
+          notes?: string | null
+          preparation_time?: number | null
+          recipe_id?: number | null
+        }
+        Update: {
+          cooking_time?: number | null
+          description?: string | null
+          id?: number
+          ingredients?: Json | null
+          instructions?: Json | null
+          name?: string
+          notes?: string | null
+          preparation_time?: number | null
+          recipe_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sides_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_bookmarks: {
         Row: {
