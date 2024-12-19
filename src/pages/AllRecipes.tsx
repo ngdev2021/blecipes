@@ -19,8 +19,11 @@ interface Recipe extends BaseItem {
   title: string;
   prep_time?: number | null;
   cook_time?: number | null;
+  total_time?: number | null;
   difficulty?: string | null;
   image?: string | null;
+  categories?: string[] | null;
+  servings?: number | null;
 }
 
 interface NamedItem extends BaseItem {
@@ -28,26 +31,6 @@ interface NamedItem extends BaseItem {
   preparation_time?: number | null;
   cooking_time?: number | null;
 }
-
-interface Drink extends BaseItem {
-  name: string;
-  alcohol_content?: number | null;
-  glass_type?: string | null;
-}
-
-interface Sauce extends BaseItem {
-  name: string;
-  consistency?: string | null;
-  flavor_profile?: string | null;
-}
-
-interface SeasoningBlend extends BaseItem {
-  name: string;
-  cuisine_type?: string | null;
-  heat_level?: string | null;
-}
-
-type CulinaryItem = Recipe | NamedItem | Drink | Sauce | SeasoningBlend;
 
 const AllRecipes = () => {
   const [activeTab, setActiveTab] = useState<RecipeType>("recipes");
@@ -72,7 +55,7 @@ const AllRecipes = () => {
           throw error;
         }
 
-        return data as CulinaryItem[];
+        return data as (Recipe | NamedItem)[];
       } catch (error) {
         console.error("Error in query:", error);
         if ((error as any)?.message?.includes("JWT")) {
@@ -83,14 +66,15 @@ const AllRecipes = () => {
     },
   });
 
-  const getItemTitle = (item: CulinaryItem): string => {
+  const getItemTitle = (item: Recipe | NamedItem): string => {
     if ("title" in item) return item.title;
     if ("name" in item) return item.name;
     return "Untitled";
   };
 
-  const getItemTime = (item: CulinaryItem): string => {
-    if ("prep_time" in item && item.prep_time) return `${item.prep_time} mins`;
+  const getItemTime = (item: Recipe | NamedItem): string => {
+    if ("total_time" in item && item.total_time) 
+      return `${item.total_time} mins`;
     if ("preparation_time" in item && item.preparation_time) 
       return `${item.preparation_time} mins`;
     if ("cooking_time" in item && item.cooking_time) 
@@ -98,16 +82,25 @@ const AllRecipes = () => {
     return "N/A";
   };
 
-  const getItemImage = (item: CulinaryItem): string => {
+  const getItemImage = (item: Recipe | NamedItem): string => {
     if ("image" in item && item.image) return item.image;
     return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c";
   };
 
-  const getItemDifficulty = (item: CulinaryItem): string => {
+  const getItemDifficulty = (item: Recipe | NamedItem): string => {
     if ("difficulty" in item && item.difficulty) return item.difficulty;
-    if ("heat_level" in item && item.heat_level) return item.heat_level;
-    if ("consistency" in item && item.consistency) return item.consistency;
     return "medium";
+  };
+
+  const getItemCategories = (item: Recipe | NamedItem): string[] => {
+    if ("categories" in item && Array.isArray(item.categories)) 
+      return item.categories;
+    return [];
+  };
+
+  const getItemServings = (item: Recipe | NamedItem): number | undefined => {
+    if ("servings" in item) return item.servings ?? undefined;
+    return undefined;
   };
 
   const renderItems = () => {
@@ -132,11 +125,14 @@ const AllRecipes = () => {
         {items.map((item) => (
           <RecipeCard
             key={item.id}
+            id={item.id}
             title={getItemTitle(item)}
             description={item.description || ""}
             image={getItemImage(item)}
             time={getItemTime(item)}
             difficulty={getItemDifficulty(item)}
+            categories={getItemCategories(item)}
+            servings={getItemServings(item)}
           />
         ))}
       </div>

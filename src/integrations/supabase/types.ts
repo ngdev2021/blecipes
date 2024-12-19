@@ -55,33 +55,45 @@ export type Database = {
       }
       ingredients: {
         Row: {
+          dietary_info: Json | null
           id: number
+          ingredient_category: string | null
           name: string
           notes: string | null
+          quality_indicators: string[] | null
           quantity: number | null
           recipe_id: number | null
+          seasonal_availability: string[] | null
           sourcing_info: Json | null
           substitutions: Json | null
           type: string | null
           unit: string | null
         }
         Insert: {
+          dietary_info?: Json | null
           id?: number
+          ingredient_category?: string | null
           name: string
           notes?: string | null
+          quality_indicators?: string[] | null
           quantity?: number | null
           recipe_id?: number | null
+          seasonal_availability?: string[] | null
           sourcing_info?: Json | null
           substitutions?: Json | null
           type?: string | null
           unit?: string | null
         }
         Update: {
+          dietary_info?: Json | null
           id?: number
+          ingredient_category?: string | null
           name?: string
           notes?: string | null
+          quality_indicators?: string[] | null
           quantity?: number | null
           recipe_id?: number | null
+          seasonal_availability?: string[] | null
           sourcing_info?: Json | null
           substitutions?: Json | null
           type?: string | null
@@ -206,6 +218,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          cooking_preferences: Json | null
           created_at: string | null
           email: string
           id: string
@@ -213,6 +226,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          cooking_preferences?: Json | null
           created_at?: string | null
           email: string
           id: string
@@ -220,6 +234,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          cooking_preferences?: Json | null
           created_at?: string | null
           email?: string
           id?: string
@@ -228,22 +243,67 @@ export type Database = {
         }
         Relationships: []
       }
+      recipe_votes: {
+        Row: {
+          created_at: string | null
+          id: string
+          recipe_id: number | null
+          status: string | null
+          user_id: string | null
+          vote_data: Json
+          vote_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          recipe_id?: number | null
+          status?: string | null
+          user_id?: string | null
+          vote_data: Json
+          vote_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          recipe_id?: number | null
+          status?: string | null
+          user_id?: string | null
+          vote_data?: Json
+          vote_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recipe_votes_recipe_id_fkey"
+            columns: ["recipe_id"]
+            isOneToOne: false
+            referencedRelation: "recipes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       recipes: {
         Row: {
           atmosphere: Json | null
+          atmosphere_details: Json | null
           categories: Json | null
           cook_time: number | null
           created_at: string | null
+          cultural_context: string | null
           description: string | null
+          dietary_restrictions: Json | null
           difficulty: string | null
           difficulty_modifiers: Json | null
+          equipment: Json | null
           id: number
           image: string | null
           inspiration: string | null
           is_seasonal: boolean | null
           prep_time: number | null
+          presentation_notes: string | null
           regional_variations: Json | null
+          required_techniques: string[] | null
           servings: number | null
+          step_complexity: Json | null
           tags: Json | null
           title: string
           total_time: number | null
@@ -252,19 +312,26 @@ export type Database = {
         }
         Insert: {
           atmosphere?: Json | null
+          atmosphere_details?: Json | null
           categories?: Json | null
           cook_time?: number | null
           created_at?: string | null
+          cultural_context?: string | null
           description?: string | null
+          dietary_restrictions?: Json | null
           difficulty?: string | null
           difficulty_modifiers?: Json | null
+          equipment?: Json | null
           id?: number
           image?: string | null
           inspiration?: string | null
           is_seasonal?: boolean | null
           prep_time?: number | null
+          presentation_notes?: string | null
           regional_variations?: Json | null
+          required_techniques?: string[] | null
           servings?: number | null
+          step_complexity?: Json | null
           tags?: Json | null
           title: string
           total_time?: number | null
@@ -273,19 +340,26 @@ export type Database = {
         }
         Update: {
           atmosphere?: Json | null
+          atmosphere_details?: Json | null
           categories?: Json | null
           cook_time?: number | null
           created_at?: string | null
+          cultural_context?: string | null
           description?: string | null
+          dietary_restrictions?: Json | null
           difficulty?: string | null
           difficulty_modifiers?: Json | null
+          equipment?: Json | null
           id?: number
           image?: string | null
           inspiration?: string | null
           is_seasonal?: boolean | null
           prep_time?: number | null
+          presentation_notes?: string | null
           regional_variations?: Json | null
+          required_techniques?: string[] | null
           servings?: number | null
+          step_complexity?: Json | null
           tags?: Json | null
           title?: string
           total_time?: number | null
