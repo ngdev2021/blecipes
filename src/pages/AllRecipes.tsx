@@ -27,8 +27,6 @@ interface NamedItem extends BaseItem {
   name: string;
   preparation_time?: number | null;
   cooking_time?: number | null;
-  difficulty?: string | null;
-  image?: string | null;
 }
 
 interface Drink extends BaseItem {
@@ -92,18 +90,23 @@ const AllRecipes = () => {
   };
 
   const getItemTime = (item: CulinaryItem): string => {
-    if ("prep_time" in item) return `${item.prep_time || 0} mins`;
-    if ("preparation_time" in item) return `${item.preparation_time || 0} mins`;
+    if ("prep_time" in item && item.prep_time) return `${item.prep_time} mins`;
+    if ("preparation_time" in item && item.preparation_time) 
+      return `${item.preparation_time} mins`;
+    if ("cooking_time" in item && item.cooking_time) 
+      return `${item.cooking_time} mins`;
     return "N/A";
   };
 
   const getItemImage = (item: CulinaryItem): string => {
     if ("image" in item && item.image) return item.image;
-    return "/placeholder.svg";
+    return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c";
   };
 
   const getItemDifficulty = (item: CulinaryItem): string => {
     if ("difficulty" in item && item.difficulty) return item.difficulty;
+    if ("heat_level" in item && item.heat_level) return item.heat_level;
+    if ("consistency" in item && item.consistency) return item.consistency;
     return "medium";
   };
 
