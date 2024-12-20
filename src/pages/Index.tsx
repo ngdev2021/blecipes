@@ -11,6 +11,7 @@ import { importRecipes } from "@/utils/recipeImport";
 
 const featuredRecipes = [
   {
+    id: 1, // Added id property
     title: "Classic Margherita Pizza",
     description: "A traditional Italian pizza with fresh basil, mozzarella, and tomatoes",
     image: "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
@@ -18,6 +19,7 @@ const featuredRecipes = [
     difficulty: "Easy",
   },
   {
+    id: 2, // Added id property
     title: "Creamy Mushroom Risotto",
     description: "Rich and creamy Italian rice dish with wild mushrooms",
     image: "https://images.unsplash.com/photo-1476124369491-e7addf5db371?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
@@ -25,6 +27,7 @@ const featuredRecipes = [
     difficulty: "Medium",
   },
   {
+    id: 3, // Added id property
     title: "Grilled Salmon",
     description: "Fresh salmon fillet with lemon and herbs",
     image: "https://images.unsplash.com/photo-1467003909585-2f8a72700288?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
