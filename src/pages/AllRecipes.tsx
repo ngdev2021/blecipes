@@ -1,48 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchBar } from "@/components/SearchBar";
-import { RecipeCard } from "@/components/RecipeCard";
-import { Loader2, SlidersHorizontal } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { FilterSheet } from "@/components/recipes/FilterSheet";
+import { RecipeGrid } from "@/components/recipes/RecipeGrid";
+import { RecipeTypeTabs } from "@/components/recipes/RecipeTypeTabs";
 
 type RecipeType = "recipes" | "sides" | "drinks" | "sauces" | "seasoning_blends";
-
-interface BaseItem {
-  id: number;
-  description?: string | null;
-}
-
-interface Recipe extends BaseItem {
-  title: string;
-  prep_time?: number | null;
-  cook_time?: number | null;
-  total_time?: number | null;
-  difficulty?: string | null;
-  image?: string | null;
-  categories?: string[] | null;
-  servings?: number | null;
-  dietary_restrictions?: string[] | null;
-}
-
-interface NamedItem extends BaseItem {
-  name: string;
-  preparation_time?: number | null;
-  cooking_time?: number | null;
-}
 
 interface Filters {
   difficulty?: string;
@@ -50,11 +16,6 @@ interface Filters {
   categories?: string[];
   dietaryRestrictions?: string[];
 }
-
-const difficultyOptions = ["easy", "medium", "hard"];
-const timeRangeOptions = ["< 30 mins", "30-60 mins", "> 60 mins"];
-const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Dessert", "Snack", "Appetizer"];
-const dietaryOptions = ["Vegetarian", "Vegan", "Gluten-Free", "Dairy-Free", "Nut-Free"];
 
 const AllRecipes = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -110,7 +71,7 @@ const AllRecipes = () => {
           throw error;
         }
 
-        return data as (Recipe | NamedItem)[];
+        return data;
       } catch (error) {
         console.error("Error in query:", error);
         if ((error as any)?.message?.includes("JWT")) {
@@ -145,179 +106,6 @@ const AllRecipes = () => {
     }));
   };
 
-  const getItemTitle = (item: Recipe | NamedItem): string => {
-    if ("title" in item) return item.title;
-    if ("name" in item) return item.name;
-    return "Untitled";
-  };
-
-  const getItemTime = (item: Recipe | NamedItem): string => {
-    if ("total_time" in item && item.total_time) 
-      return `${item.total_time} mins`;
-    if ("preparation_time" in item && item.preparation_time) 
-      return `${item.preparation_time} mins`;
-    if ("cooking_time" in item && item.cooking_time) 
-      return `${item.cooking_time} mins`;
-    return "N/A";
-  };
-
-  const getItemImage = (item: Recipe | NamedItem): string => {
-    if ("image" in item && item.image) return item.image;
-    return "https://images.unsplash.com/photo-1546069901-ba9599a7e63c";
-  };
-
-  const getItemDifficulty = (item: Recipe | NamedItem): string => {
-    if ("difficulty" in item && item.difficulty) return item.difficulty;
-    return "medium";
-  };
-
-  const getItemCategories = (item: Recipe | NamedItem): string[] => {
-    if ("categories" in item && Array.isArray(item.categories)) 
-      return item.categories;
-    return [];
-  };
-
-  const getItemServings = (item: Recipe | NamedItem): number | undefined => {
-    if ("servings" in item) return item.servings ?? undefined;
-    return undefined;
-  };
-
-  const renderFilters = () => (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <Label>Difficulty</Label>
-        <Select
-          value={filters.difficulty}
-          onValueChange={(value) => handleFilterChange("difficulty", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            {difficultyOptions.map((option) => (
-              <SelectItem key={option} value={option}>
-                {option.charAt(0).toUpperCase() + option.slice(1)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Cooking Time</Label>
-        <Select
-          value={filters.timeRange}
-          onValueChange={(value) => handleFilterChange("timeRange", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select time range" />
-          </SelectTrigger>
-          <SelectContent>
-            {timeRangeOptions.map((option) => (
-              <SelectItem key={option} value={option}>{option}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Categories</Label>
-        <div className="space-y-2">
-          {categoryOptions.map((category) => (
-            <div key={category} className="flex items-center space-x-2">
-              <Checkbox
-                id={category}
-                checked={filters.categories?.includes(category)}
-                onCheckedChange={(checked) => {
-                  const newCategories = filters.categories || [];
-                  if (checked) {
-                    handleFilterChange("categories", [...newCategories, category]);
-                  } else {
-                    handleFilterChange(
-                      "categories",
-                      newCategories.filter((c) => c !== category)
-                    );
-                  }
-                }}
-              />
-              <Label htmlFor={category}>{category}</Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label>Dietary Restrictions</Label>
-        <div className="space-y-2">
-          {dietaryOptions.map((restriction) => (
-            <div key={restriction} className="flex items-center space-x-2">
-              <Checkbox
-                id={restriction}
-                checked={filters.dietaryRestrictions?.includes(restriction)}
-                onCheckedChange={(checked) => {
-                  const newRestrictions = filters.dietaryRestrictions || [];
-                  if (checked) {
-                    handleFilterChange("dietaryRestrictions", [...newRestrictions, restriction]);
-                  } else {
-                    handleFilterChange(
-                      "dietaryRestrictions",
-                      newRestrictions.filter((r) => r !== restriction)
-                    );
-                  }
-                }}
-              />
-              <Label htmlFor={restriction}>{restriction}</Label>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <Button
-        variant="outline"
-        className="w-full"
-        onClick={() => setFilters({})}
-      >
-        Clear Filters
-      </Button>
-    </div>
-  );
-
-  const renderItems = () => {
-    if (isLoading) {
-      return (
-        <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
-      );
-    }
-
-    if (!items?.length) {
-      return (
-        <div className="text-center text-gray-500">
-          No items found with the current filters
-        </div>
-      );
-    }
-
-    return (
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {items.map((item) => (
-          <RecipeCard
-            key={item.id}
-            id={item.id}
-            title={getItemTitle(item)}
-            description={item.description || ""}
-            image={getItemImage(item)}
-            time={getItemTime(item)}
-            difficulty={getItemDifficulty(item)}
-            categories={getItemCategories(item)}
-            servings={getItemServings(item)}
-          />
-        ))}
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-cream px-4 py-8">
       <div className="mx-auto max-w-7xl">
@@ -328,40 +116,19 @@ const AllRecipes = () => {
           <div className="flex-1">
             <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
           </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <SlidersHorizontal className="h-4 w-4" />
-                Filters
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Filter Recipes</SheetTitle>
-              </SheetHeader>
-              {renderFilters()}
-            </SheetContent>
-          </Sheet>
+          <FilterSheet 
+            filters={filters} 
+            onFilterChange={handleFilterChange}
+            onClearFilters={() => setFilters({})}
+          />
         </div>
 
-        <Tabs
-          defaultValue="recipes"
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as RecipeType)}
-          className="w-full"
+        <RecipeTypeTabs 
+          activeTab={activeTab} 
+          onTabChange={setActiveTab}
         >
-          <TabsList className="mb-8 grid w-full grid-cols-2 gap-4 md:grid-cols-5">
-            <TabsTrigger value="recipes">Recipes</TabsTrigger>
-            <TabsTrigger value="sides">Sides</TabsTrigger>
-            <TabsTrigger value="drinks">Drinks</TabsTrigger>
-            <TabsTrigger value="sauces">Sauces</TabsTrigger>
-            <TabsTrigger value="seasoning_blends">Seasonings</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value={activeTab} className="mt-6">
-            {renderItems()}
-          </TabsContent>
-        </Tabs>
+          <RecipeGrid items={items} isLoading={isLoading} />
+        </RecipeTypeTabs>
       </div>
     </div>
   );
