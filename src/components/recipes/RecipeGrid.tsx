@@ -58,8 +58,12 @@ export const RecipeGrid = ({ items, isLoading }: RecipeGridProps) => {
 
   const getItemCategories = (item: Recipe | NamedItem): string[] => {
     if ("categories" in item && item.categories) {
-      if (Array.isArray(item.categories)) return item.categories;
-      if (typeof item.categories === 'object') return Object.values(item.categories as object);
+      if (Array.isArray(item.categories)) {
+        return item.categories.map(cat => String(cat));
+      }
+      if (typeof item.categories === 'object') {
+        return Object.values(item.categories as object).map(cat => String(cat));
+      }
     }
     return [];
   };
