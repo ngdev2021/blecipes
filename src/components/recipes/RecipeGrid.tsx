@@ -1,5 +1,6 @@
 import { Loader2 } from "lucide-react";
 import { RecipeCard } from "@/components/RecipeCard";
+import { Json } from "@/integrations/supabase/types";
 
 interface BaseItem {
   id: number;
@@ -13,7 +14,7 @@ interface Recipe extends BaseItem {
   total_time?: number | null;
   difficulty?: string | null;
   image?: string | null;
-  categories?: string[] | null;
+  categories?: Json | null;
   servings?: number | null;
 }
 
@@ -56,8 +57,10 @@ export const RecipeGrid = ({ items, isLoading }: RecipeGridProps) => {
   };
 
   const getItemCategories = (item: Recipe | NamedItem): string[] => {
-    if ("categories" in item && Array.isArray(item.categories)) 
-      return item.categories;
+    if ("categories" in item && item.categories) {
+      if (Array.isArray(item.categories)) return item.categories;
+      if (typeof item.categories === 'object') return Object.values(item.categories as object);
+    }
     return [];
   };
 

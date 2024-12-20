@@ -35,28 +35,29 @@ const AllRecipes = () => {
           query = query.ilike(activeTab === "recipes" ? "title" : "name", `%${searchQuery}%`);
         }
 
-        if (filters.difficulty) {
-          query = query.eq("difficulty", filters.difficulty);
-        }
-
-        if (filters.timeRange) {
-          const [min, max] = getTimeRangeValues(filters.timeRange);
-          if (min !== undefined) {
-            query = query.gte("total_time", min);
+        // Only apply these filters for the recipes table
+        if (activeTab === "recipes") {
+          if (filters.difficulty) {
+            query = query.eq("difficulty", filters.difficulty);
           }
-          if (max !== undefined) {
-            query = query.lte("total_time", max);
+
+          if (filters.timeRange) {
+            const [min, max] = getTimeRangeValues(filters.timeRange);
+            if (min !== undefined) {
+              query = query.gte("total_time", min);
+            }
+            if (max !== undefined) {
+              query = query.lte("total_time", max);
+            }
           }
-        }
 
-        if (filters.categories?.length) {
-          // For JSONB array, use containedBy to check if any of the categories match
-          query = query.containedBy("categories", filters.categories);
-        }
+          if (filters.categories?.length) {
+            query = query.contains("categories", filters.categories);
+          }
 
-        if (filters.dietaryRestrictions?.length) {
-          // For JSONB array, use containedBy to check if any of the dietary restrictions match
-          query = query.containedBy("dietary_restrictions", filters.dietaryRestrictions);
+          if (filters.dietaryRestrictions?.length) {
+            query = query.contains("dietary_restrictions", filters.dietaryRestrictions);
+          }
         }
 
         const { data, error } = await query;
