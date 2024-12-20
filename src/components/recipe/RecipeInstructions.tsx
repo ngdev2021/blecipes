@@ -1,14 +1,13 @@
 import { Timer, AlertTriangle } from "lucide-react";
+import { Json } from "@/integrations/supabase/types";
 
 interface Instruction {
   id: number;
   step: number;
   instruction: string;
-  tip?: string;
-  troubleshooting?: string;
-  timer?: {
-    duration: number;
-  };
+  tip?: string | null;
+  troubleshooting?: string | null;
+  timer?: Json;
 }
 
 interface RecipeInstructionsProps {
@@ -16,6 +15,13 @@ interface RecipeInstructionsProps {
 }
 
 export const RecipeInstructions = ({ instructions }: RecipeInstructionsProps) => {
+  const getTimerDuration = (timer: Json): number | null => {
+    if (typeof timer === 'object' && timer !== null && 'duration' in timer) {
+      return (timer as { duration: number }).duration;
+    }
+    return null;
+  };
+
   return (
     <div className="mb-8">
       <h2 className="mb-4 font-playfair text-2xl font-semibold text-charcoal">
@@ -31,10 +37,10 @@ export const RecipeInstructions = ({ instructions }: RecipeInstructionsProps) =>
               <div className="flex-1">
                 <p>{instruction.instruction}</p>
                 
-                {instruction.timer && (
+                {instruction.timer && getTimerDuration(instruction.timer) && (
                   <div className="mt-2 flex items-center gap-2 text-sm text-sage">
                     <Timer className="h-4 w-4" />
-                    <span>{instruction.timer.duration} minutes</span>
+                    <span>{getTimerDuration(instruction.timer)} minutes</span>
                   </div>
                 )}
                 
