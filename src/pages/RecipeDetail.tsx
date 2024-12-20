@@ -65,6 +65,11 @@ const RecipeDetail = () => {
     );
   }
 
+  // Safely handle categories, ensuring it's an array
+  const categories = Array.isArray(recipe.categories) ? recipe.categories : 
+                    typeof recipe.categories === 'object' && recipe.categories !== null ? 
+                    Object.values(recipe.categories) : [];
+
   return (
     <div className="min-h-screen bg-cream px-4 py-8">
       <div className="mx-auto max-w-4xl">
@@ -116,9 +121,9 @@ const RecipeDetail = () => {
               )}
             </div>
 
-            {recipe.categories && (
+            {categories.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
-                {recipe.categories.map((category: string, index: number) => (
+                {categories.map((category: string, index: number) => (
                   <span
                     key={index}
                     className="rounded-full bg-sage/10 px-3 py-1 text-sm text-sage"
