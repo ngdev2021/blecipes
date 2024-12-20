@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SearchBar } from "@/components/SearchBar";
 import { RecipeCard } from "@/components/RecipeCard";
 import { Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 
 type RecipeType = "recipes" | "sides" | "drinks" | "sauces" | "seasoning_blends";
@@ -33,17 +33,23 @@ interface NamedItem extends BaseItem {
 }
 
 const AllRecipes = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<RecipeType>("recipes");
   const navigate = useNavigate();
   const { toast } = useToast();
+  const searchQuery = searchParams.get("search") || "";
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ["culinary-items", activeTab],
+    queryKey: ["culinary-items", activeTab, searchQuery],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from(activeTab)
-          .select("*");
+        let query = supabase.from(activeTab).select("*");
+
+        if (searchQuery) {
+          query = query.ilike(activeTab === "recipes" ? "title" : "name", `%${searchQuery}%`);
+        }
+
+        const { data, error } = await query;
 
         if (error) {
           console.error("Error fetching items:", error);
@@ -65,6 +71,10 @@ const AllRecipes = () => {
       }
     },
   });
+
+  const handleSearch = (query: string) => {
+    setSearchParams({ search: query });
+  };
 
   const getItemTitle = (item: Recipe | NamedItem): string => {
     if ("title" in item) return item.title;
@@ -146,7 +156,7 @@ const AllRecipes = () => {
           Culinary Collection
         </h1>
         <div className="mb-8">
-          <SearchBar />
+          <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
         </div>
 
         <Tabs
