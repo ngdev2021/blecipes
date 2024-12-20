@@ -89,11 +89,13 @@ const AllRecipes = () => {
         }
 
         if (filters.categories?.length) {
-          query = query.contains("categories", filters.categories);
+          // For JSONB array, use containedBy to check if any of the categories match
+          query = query.containedBy("categories", filters.categories);
         }
 
         if (filters.dietaryRestrictions?.length) {
-          query = query.contains("dietary_restrictions", filters.dietaryRestrictions);
+          // For JSONB array, use containedBy to check if any of the dietary restrictions match
+          query = query.containedBy("dietary_restrictions", filters.dietaryRestrictions);
         }
 
         const { data, error } = await query;
