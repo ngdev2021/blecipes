@@ -1,18 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ArrowLeft, Info, Timer, AlertTriangle } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { RecipeHeader } from "@/components/recipe/RecipeHeader";
 import { RecipeStats } from "@/components/recipe/RecipeStats";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { RecipeIngredients } from "@/components/recipe/RecipeIngredients";
+import { RecipeInstructions } from "@/components/recipe/RecipeInstructions";
 
 const RecipeDetail = () => {
   const { id } = useParams();
@@ -22,7 +18,17 @@ const RecipeDetail = () => {
   const { data: recipe, isLoading } = useQuery({
     queryKey: ["recipe", id],
     queryFn: async () => {
-      console.log("Fetching recipe with ID:", id); // Debug log
+      console.log("Fetching recipe with ID:", id);
+
+      if (!id || isNaN(Number(id))) {
+        console.error("Invalid recipe ID:", id);
+        toast({
+          title: "Invalid Recipe ID",
+          description: "The recipe ID provided is invalid",
+          variant: "destructive",
+        });
+        return null;
+      }
 
       const { data: recipeData, error: recipeError } = await supabase
         .from("recipes")
@@ -46,13 +52,14 @@ const RecipeDetail = () => {
             timer
           )
         `)
-        .eq("id", Number(id)) // Ensure id is converted to number
+        .eq("id", Number(id))
         .maybeSingle();
 
-      console.log("Recipe data:", recipeData); // Debug log
-      console.log("Recipe error:", recipeError); // Debug log
+      console.log("Recipe data:", recipeData);
+      console.log("Recipe error:", recipeError);
 
       if (recipeError) {
+        console.error("Error fetching recipe:", recipeError);
         toast({
           title: "Error",
           description: "Failed to load recipe details",
@@ -62,6 +69,7 @@ const RecipeDetail = () => {
       }
 
       if (!recipeData) {
+        console.log("Recipe not found for ID:", id);
         toast({
           title: "Recipe not found",
           description: "The requested recipe could not be found",
@@ -70,17 +78,14 @@ const RecipeDetail = () => {
         return null;
       }
 
-      // Ensure equipment is properly typed and has a default value
-      const equipment = typeof recipeData.equipment === 'object' && recipeData.equipment !== null
-        ? recipeData.equipment as Record<string, any>
-        : {};
-
       return {
         ...recipeData,
-        equipment
+        equipment: typeof recipeData.equipment === 'object' && recipeData.equipment !== null
+          ? recipeData.equipment
+          : {}
       };
     },
-    retry: false, // Don't retry if recipe is not found
+    retry: false,
   });
 
   if (isLoading) {
@@ -99,14 +104,6 @@ const RecipeDetail = () => {
       </div>
     );
   }
-
-  const categories = Array.isArray(recipe.categories) ? recipe.categories : 
-                    typeof recipe.categories === 'object' && recipe.categories !== null ? 
-                    Object.values(recipe.categories) : [];
-
-  const dietaryInfo = recipe.dietary_restrictions ? 
-    (typeof recipe.dietary_restrictions === 'object' ? 
-      Object.entries(recipe.dietary_restrictions) : []) : [];
 
   return (
     <div className="min-h-screen bg-cream px-4 py-8">
@@ -141,78 +138,8 @@ const RecipeDetail = () => {
               equipment={recipe.equipment}
             />
 
-            {/* Rest of the component remains unchanged */}
-            <div className="mb-8">
-              <h2 className="mb-4 font-playfair text-2xl font-semibold text-charcoal">
-                Ingredients
-              </h2>
-              <ul className="space-y-3">
-                {recipe.ingredients?.map((ingredient: any) => (
-                  <li key={ingredient.id} className="flex items-baseline gap-2">
-                    <span className="font-medium">
-                      {ingredient.quantity} {ingredient.unit}
-                    </span>
-                    <span>{ingredient.name}</span>
-                    <TooltipProvider>
-                      {ingredient.notes && (
-                        <Tooltip>
-                          <TooltipTrigger>
-                            <Info className="ml-1 h-4 w-4 text-gray-400" />
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>{ingredient.notes}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      )}
-                    </TooltipProvider>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mb-8">
-              <h2 className="mb-4 font-playfair text-2xl font-semibold text-charcoal">
-                Instructions
-              </h2>
-              <ol className="space-y-6">
-                {recipe.instructions?.sort((a: any, b: any) => a.step - b.step).map((instruction: any) => (
-                  <li key={instruction.id} className="relative">
-                    <div className="flex gap-4">
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-sage text-sm text-white">
-                        {instruction.step}
-                      </span>
-                      <div className="flex-1">
-                        <p>{instruction.instruction}</p>
-                        
-                        {instruction.timer && (
-                          <div className="mt-2 flex items-center gap-2 text-sm text-sage">
-                            <Timer className="h-4 w-4" />
-                            <span>{instruction.timer.duration} minutes</span>
-                          </div>
-                        )}
-                        
-                        {instruction.tip && (
-                          <div className="mt-3 rounded-lg bg-blue-50 p-3 text-sm text-blue-700">
-                            <strong className="block font-medium">Tip:</strong>
-                            {instruction.tip}
-                          </div>
-                        )}
-                        
-                        {instruction.troubleshooting && (
-                          <div className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-700">
-                            <div className="mb-1 flex items-center gap-1">
-                              <AlertTriangle className="h-4 w-4" />
-                              <strong className="font-medium">Troubleshooting:</strong>
-                            </div>
-                            {instruction.troubleshooting}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                ))}
-              </ol>
-            </div>
+            <RecipeIngredients ingredients={recipe.ingredients || []} />
+            <RecipeInstructions instructions={recipe.instructions || []} />
 
             {recipe.presentation_notes && (
               <div className="rounded-lg bg-cream/50 p-6">
