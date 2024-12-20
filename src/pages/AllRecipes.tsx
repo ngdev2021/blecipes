@@ -2,11 +2,22 @@ import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SearchBar } from "@/components/SearchBar";
 import { RecipeCard } from "@/components/RecipeCard";
-import { Loader2 } from "lucide-react";
+import { Loader2, SlidersHorizontal } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 type RecipeType = "recipes" | "sides" | "drinks" | "sauces" | "seasoning_blends";
 
@@ -24,6 +35,7 @@ interface Recipe extends BaseItem {
   image?: string | null;
   categories?: string[] | null;
   servings?: number | null;
+  dietary_restrictions?: string[] | null;
 }
 
 interface NamedItem extends BaseItem {
@@ -32,21 +44,56 @@ interface NamedItem extends BaseItem {
   cooking_time?: number | null;
 }
 
+interface Filters {
+  difficulty?: string;
+  timeRange?: string;
+  categories?: string[];
+  dietaryRestrictions?: string[];
+}
+
+const difficultyOptions = ["easy", "medium", "hard"];
+const timeRangeOptions = ["< 30 mins", "30-60 mins", "> 60 mins"];
+const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Dessert", "Snack", "Appetizer"];
+const dietaryOptions = ["Vegetarian", "Vegan", "Gluten-Free", "Dairy-Free", "Nut-Free"];
+
 const AllRecipes = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<RecipeType>("recipes");
+  const [filters, setFilters] = useState<Filters>({});
   const navigate = useNavigate();
   const { toast } = useToast();
   const searchQuery = searchParams.get("search") || "";
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ["culinary-items", activeTab, searchQuery],
+    queryKey: ["culinary-items", activeTab, searchQuery, filters],
     queryFn: async () => {
       try {
         let query = supabase.from(activeTab).select("*");
 
         if (searchQuery) {
           query = query.ilike(activeTab === "recipes" ? "title" : "name", `%${searchQuery}%`);
+        }
+
+        if (filters.difficulty) {
+          query = query.eq("difficulty", filters.difficulty);
+        }
+
+        if (filters.timeRange) {
+          const [min, max] = getTimeRangeValues(filters.timeRange);
+          if (min !== undefined) {
+            query = query.gte("total_time", min);
+          }
+          if (max !== undefined) {
+            query = query.lte("total_time", max);
+          }
+        }
+
+        if (filters.categories?.length) {
+          query = query.contains("categories", filters.categories);
+        }
+
+        if (filters.dietaryRestrictions?.length) {
+          query = query.contains("dietary_restrictions", filters.dietaryRestrictions);
         }
 
         const { data, error } = await query;
@@ -72,8 +119,28 @@ const AllRecipes = () => {
     },
   });
 
+  const getTimeRangeValues = (range: string): [number | undefined, number | undefined] => {
+    switch (range) {
+      case "< 30 mins":
+        return [undefined, 30];
+      case "30-60 mins":
+        return [30, 60];
+      case "> 60 mins":
+        return [60, undefined];
+      default:
+        return [undefined, undefined];
+    }
+  };
+
   const handleSearch = (query: string) => {
     setSearchParams({ search: query });
+  };
+
+  const handleFilterChange = (type: keyof Filters, value: any) => {
+    setFilters(prev => ({
+      ...prev,
+      [type]: value
+    }));
   };
 
   const getItemTitle = (item: Recipe | NamedItem): string => {
@@ -113,6 +180,106 @@ const AllRecipes = () => {
     return undefined;
   };
 
+  const renderFilters = () => (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Label>Difficulty</Label>
+        <Select
+          value={filters.difficulty}
+          onValueChange={(value) => handleFilterChange("difficulty", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select difficulty" />
+          </SelectTrigger>
+          <SelectContent>
+            {difficultyOptions.map((option) => (
+              <SelectItem key={option} value={option}>
+                {option.charAt(0).toUpperCase() + option.slice(1)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Cooking Time</Label>
+        <Select
+          value={filters.timeRange}
+          onValueChange={(value) => handleFilterChange("timeRange", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select time range" />
+          </SelectTrigger>
+          <SelectContent>
+            {timeRangeOptions.map((option) => (
+              <SelectItem key={option} value={option}>{option}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Categories</Label>
+        <div className="space-y-2">
+          {categoryOptions.map((category) => (
+            <div key={category} className="flex items-center space-x-2">
+              <Checkbox
+                id={category}
+                checked={filters.categories?.includes(category)}
+                onCheckedChange={(checked) => {
+                  const newCategories = filters.categories || [];
+                  if (checked) {
+                    handleFilterChange("categories", [...newCategories, category]);
+                  } else {
+                    handleFilterChange(
+                      "categories",
+                      newCategories.filter((c) => c !== category)
+                    );
+                  }
+                }}
+              />
+              <Label htmlFor={category}>{category}</Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Dietary Restrictions</Label>
+        <div className="space-y-2">
+          {dietaryOptions.map((restriction) => (
+            <div key={restriction} className="flex items-center space-x-2">
+              <Checkbox
+                id={restriction}
+                checked={filters.dietaryRestrictions?.includes(restriction)}
+                onCheckedChange={(checked) => {
+                  const newRestrictions = filters.dietaryRestrictions || [];
+                  if (checked) {
+                    handleFilterChange("dietaryRestrictions", [...newRestrictions, restriction]);
+                  } else {
+                    handleFilterChange(
+                      "dietaryRestrictions",
+                      newRestrictions.filter((r) => r !== restriction)
+                    );
+                  }
+                }}
+              />
+              <Label htmlFor={restriction}>{restriction}</Label>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Button
+        variant="outline"
+        className="w-full"
+        onClick={() => setFilters({})}
+      >
+        Clear Filters
+      </Button>
+    </div>
+  );
+
   const renderItems = () => {
     if (isLoading) {
       return (
@@ -125,7 +292,7 @@ const AllRecipes = () => {
     if (!items?.length) {
       return (
         <div className="text-center text-gray-500">
-          No items found in this category
+          No items found with the current filters
         </div>
       );
     }
@@ -155,8 +322,24 @@ const AllRecipes = () => {
         <h1 className="mb-8 text-center font-playfair text-4xl font-bold text-charcoal">
           Culinary Collection
         </h1>
-        <div className="mb-8">
-          <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
+        <div className="mb-8 flex items-center gap-4">
+          <div className="flex-1">
+            <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <SlidersHorizontal className="h-4 w-4" />
+                Filters
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Filter Recipes</SheetTitle>
+              </SheetHeader>
+              {renderFilters()}
+            </SheetContent>
+          </Sheet>
         </div>
 
         <Tabs
