@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Info, Timer, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
@@ -45,7 +45,7 @@ const RecipeDetail = () => {
           )
         `)
         .eq("id", id)
-        .single();
+        .maybeSingle(); // Changed from .single() to .maybeSingle()
 
       if (recipeError) {
         toast({
@@ -56,7 +56,19 @@ const RecipeDetail = () => {
         throw recipeError;
       }
 
-      return recipeData;
+      if (!recipeData) {
+        toast({
+          title: "Recipe not found",
+          description: "The requested recipe could not be found",
+          variant: "destructive",
+        });
+        return null;
+      }
+
+      return {
+        ...recipeData,
+        equipment: recipeData.equipment as Record<string, any> || {},
+      };
     },
   });
 
