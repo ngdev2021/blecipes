@@ -22,6 +22,8 @@ const RecipeDetail = () => {
   const { data: recipe, isLoading } = useQuery({
     queryKey: ["recipe", id],
     queryFn: async () => {
+      console.log("Fetching recipe with ID:", id); // Debug log
+
       const { data: recipeData, error: recipeError } = await supabase
         .from("recipes")
         .select(`
@@ -44,8 +46,11 @@ const RecipeDetail = () => {
             timer
           )
         `)
-        .eq("id", id)
-        .maybeSingle(); // Changed from .single() to .maybeSingle()
+        .eq("id", Number(id)) // Ensure id is converted to number
+        .maybeSingle();
+
+      console.log("Recipe data:", recipeData); // Debug log
+      console.log("Recipe error:", recipeError); // Debug log
 
       if (recipeError) {
         toast({
@@ -65,11 +70,17 @@ const RecipeDetail = () => {
         return null;
       }
 
+      // Ensure equipment is properly typed and has a default value
+      const equipment = typeof recipeData.equipment === 'object' && recipeData.equipment !== null
+        ? recipeData.equipment as Record<string, any>
+        : {};
+
       return {
         ...recipeData,
-        equipment: recipeData.equipment as Record<string, any> || {},
+        equipment
       };
     },
+    retry: false, // Don't retry if recipe is not found
   });
 
   if (isLoading) {
@@ -130,6 +141,7 @@ const RecipeDetail = () => {
               equipment={recipe.equipment}
             />
 
+            {/* Rest of the component remains unchanged */}
             <div className="mb-8">
               <h2 className="mb-4 font-playfair text-2xl font-semibold text-charcoal">
                 Ingredients
