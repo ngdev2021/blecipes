@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AllRecipes from "./pages/AllRecipes";
+import RecipeDetail from "./pages/RecipeDetail";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,14 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <AllRecipes />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recipe/:id"
+              element={
+                <ProtectedRoute>
+                  <RecipeDetail />
                 </ProtectedRoute>
               }
             />

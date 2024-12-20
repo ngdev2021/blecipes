@@ -1,20 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Loader2, 
-  Clock, 
-  ChefHat, 
-  Users, 
-  ArrowLeft,
-  Utensils,
-  Timer,
-  AlertTriangle,
-  Info
-} from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
+import { RecipeHeader } from "@/components/recipe/RecipeHeader";
+import { RecipeStats } from "@/components/recipe/RecipeStats";
 import {
   Tooltip,
   TooltipContent,
@@ -110,97 +102,21 @@ const RecipeDetail = () => {
           animate={{ opacity: 1, y: 0 }}
           className="overflow-hidden rounded-lg bg-white shadow-lg"
         >
-          {recipe.image && (
-            <div className="relative h-[400px]">
-              <img
-                src={recipe.image}
-                alt={recipe.title}
-                className="h-full w-full object-cover"
-              />
-              {recipe.is_seasonal && (
-                <div className="absolute right-4 top-4 rounded-full bg-sage px-4 py-2 text-sm font-medium text-white">
-                  Seasonal Recipe
-                </div>
-              )}
-            </div>
-          )}
-
           <div className="p-6">
-            <div className="mb-6 border-b border-gray-200 pb-6">
-              <h1 className="font-playfair text-3xl font-bold text-charcoal">
-                {recipe.title}
-              </h1>
-              
-              <p className="mt-4 text-gray-600">{recipe.description}</p>
+            <RecipeHeader
+              image={recipe.image}
+              title={recipe.title}
+              description={recipe.description}
+              isSeasonalRecipe={recipe.is_seasonal}
+              culturalContext={recipe.cultural_context}
+            />
 
-              {recipe.cultural_context && (
-                <div className="mt-4 rounded-lg bg-cream/50 p-4">
-                  <h3 className="mb-2 font-medium text-charcoal">Cultural Context</h3>
-                  <p className="text-sm text-gray-600">{recipe.cultural_context}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
-              <div className="flex flex-col items-center rounded-lg bg-cream/30 p-4">
-                <Clock className="mb-2 h-6 w-6 text-sage" />
-                <span className="text-sm font-medium">{recipe.total_time} mins</span>
-                <span className="text-xs text-gray-500">Total Time</span>
-              </div>
-              <div className="flex flex-col items-center rounded-lg bg-cream/30 p-4">
-                <ChefHat className="mb-2 h-6 w-6 text-sage" />
-                <span className="text-sm font-medium">{recipe.difficulty}</span>
-                <span className="text-xs text-gray-500">Difficulty</span>
-              </div>
-              <div className="flex flex-col items-center rounded-lg bg-cream/30 p-4">
-                <Users className="mb-2 h-6 w-6 text-sage" />
-                <span className="text-sm font-medium">{recipe.servings} servings</span>
-                <span className="text-xs text-gray-500">Yield</span>
-              </div>
-              <div className="flex flex-col items-center rounded-lg bg-cream/30 p-4">
-                <Utensils className="mb-2 h-6 w-6 text-sage" />
-                <span className="text-sm font-medium">
-                  {recipe.equipment ? Object.keys(recipe.equipment).length : 0}
-                </span>
-                <span className="text-xs text-gray-500">Tools Needed</span>
-              </div>
-            </div>
-
-            {categories.length > 0 && (
-              <div className="mb-6">
-                <h2 className="mb-3 font-playfair text-xl font-semibold text-charcoal">
-                  Categories
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((category: string, index: number) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-sage/10 px-3 py-1 text-sm text-sage"
-                    >
-                      {category}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {dietaryInfo.length > 0 && (
-              <div className="mb-6">
-                <h2 className="mb-3 font-playfair text-xl font-semibold text-charcoal">
-                  Dietary Information
-                </h2>
-                <div className="flex flex-wrap gap-2">
-                  {dietaryInfo.map(([key, value]: [string, any], index: number) => (
-                    <span
-                      key={index}
-                      className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600"
-                    >
-                      {key}: {String(value)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+            <RecipeStats
+              totalTime={recipe.total_time}
+              difficulty={recipe.difficulty}
+              servings={recipe.servings}
+              equipment={recipe.equipment}
+            />
 
             <div className="mb-8">
               <h2 className="mb-4 font-playfair text-2xl font-semibold text-charcoal">
