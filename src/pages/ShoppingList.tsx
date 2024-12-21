@@ -15,27 +15,19 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Loader2, Plus, RefreshCw, Trash } from "lucide-react";
+import { ShoppingItem, ShoppingList as ShoppingListType, isShoppingItemArray } from "@/types/shopping-list";
 
-interface ShoppingItem {
-  id: string;
+interface NewItem {
   name: string;
   category: string;
   quantity: number;
   unit: string;
-  completed: boolean;
-}
-
-interface ShoppingList {
-  id: number;
-  user_id: string;
-  items: ShoppingItem[];
-  status: string;
 }
 
 const ShoppingList = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [newItem, setNewItem] = useState({
+  const [newItem, setNewItem] = useState<NewItem>({
     name: "",
     category: "",
     quantity: 1,
@@ -71,13 +63,16 @@ const ShoppingList = () => {
           .single();
 
         if (createError) throw createError;
-        return { ...newList, items: [] } as ShoppingList;
+        return {
+          ...newList,
+          items: [],
+        } as ShoppingListType;
       }
 
       return {
         ...data,
-        items: (data.items || []) as ShoppingItem[],
-      } as ShoppingList;
+        items: isShoppingItemArray(data.items) ? data.items : [],
+      } as ShoppingListType;
     },
     enabled: !!user?.id,
   });
@@ -91,7 +86,7 @@ const ShoppingList = () => {
         .upsert({
           id: shoppingList.id,
           user_id: user.id,
-          items: items,
+          items: items as any, // Type assertion needed due to Supabase JSON type
           status: "active",
         });
 
@@ -171,7 +166,6 @@ const ShoppingList = () => {
         unit: "kg",
         completed: false,
       },
-      // Add more mock items as needed
     ];
 
     updateShoppingListMutation.mutate(mockItems);
