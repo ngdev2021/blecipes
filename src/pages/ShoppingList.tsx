@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/components/ui/use-toast";
 import {
   Select,
   SelectContent,
@@ -9,8 +11,152 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { Loader2, Plus, RefreshCw, Trash } from "lucide-react";
+
+interface ShoppingItem {
+  id: string;
+  name: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  completed: boolean;
+}
+
+interface ShoppingList {
+  id: number;
+  user_id: string;
+  items: ShoppingItem[];
+  status: "active" | "completed";
+}
 
 const ShoppingList = () => {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [newItem, setNewItem] = useState({
+    name: "",
+    category: "",
+    quantity: 1,
+    unit: "",
+  });
+
+  const { data: shoppingList, isLoading } = useQuery({
+    queryKey: ["shoppingList", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("shopping_lists")
+        .select("*")
+        .eq("user_id", user?.id)
+        .eq("status", "active")
+        .single();
+
+      if (error && error.code !== "PGRST116") throw error;
+      return data as ShoppingList;
+    },
+  });
+
+  const updateShoppingListMutation = useMutation({
+    mutationFn: async (items: ShoppingItem[]) => {
+      const { error } = await supabase
+        .from("shopping_lists")
+        .upsert({
+          user_id: user?.id,
+          items,
+          status: "active",
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Shopping list updated",
+        description: "Your shopping list has been saved.",
+      });
+    },
+  });
+
+  const handleAddItem = () => {
+    if (!newItem.name || !newItem.category || !newItem.unit) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const newItems = [
+      ...(shoppingList?.items || []),
+      {
+        id: crypto.randomUUID(),
+        ...newItem,
+        completed: false,
+      },
+    ];
+
+    updateShoppingListMutation.mutate(newItems);
+    setNewItem({ name: "", category: "", quantity: 1, unit: "" });
+  };
+
+  const handleToggleItem = (itemId: string) => {
+    if (!shoppingList?.items) return;
+
+    const updatedItems = shoppingList.items.map((item) =>
+      item.id === itemId ? { ...item, completed: !item.completed } : item
+    );
+
+    updateShoppingListMutation.mutate(updatedItems);
+  };
+
+  const handleClearCompleted = () => {
+    if (!shoppingList?.items) return;
+
+    const updatedItems = shoppingList.items.filter((item) => !item.completed);
+    updateShoppingListMutation.mutate(updatedItems);
+  };
+
+  const generateFromMealPlan = async () => {
+    toast({
+      title: "Generating shopping list",
+      description: "Creating your shopping list from meal plan...",
+    });
+
+    // Simulate AI generation delay
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const mockItems: ShoppingItem[] = [
+      {
+        id: crypto.randomUUID(),
+        name: "Chicken breast",
+        category: "meat",
+        quantity: 2,
+        unit: "kg",
+        completed: false,
+      },
+      {
+        id: crypto.randomUUID(),
+        name: "Rice",
+        category: "pantry",
+        quantity: 1,
+        unit: "kg",
+        completed: false,
+      },
+      // Add more mock items as needed
+    ];
+
+    updateShoppingListMutation.mutate(mockItems);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-sage" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-cream px-4 py-8">
       <div className="mx-auto max-w-4xl">
@@ -19,22 +165,39 @@ const ShoppingList = () => {
             Shopping List
           </h1>
           <div className="flex gap-4">
-            <Button variant="outline">Clear Completed</Button>
-            <Button>Add Item</Button>
+            <Button variant="outline" onClick={handleClearCompleted}>
+              <Trash className="mr-2 h-4 w-4" />
+              Clear Completed
+            </Button>
+            <Button onClick={generateFromMealPlan}>
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Generate from Meal Plan
+            </Button>
           </div>
         </div>
 
         <div className="rounded-lg bg-white p-6 shadow-lg">
-          {/* Add Item Form */}
           <div className="mb-8 grid gap-4 rounded-lg border p-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="item-name">Item Name</Label>
-                <Input id="item-name" className="mt-1" />
+                <Input
+                  id="item-name"
+                  value={newItem.name}
+                  onChange={(e) =>
+                    setNewItem({ ...newItem, name: e.target.value })
+                  }
+                  className="mt-1"
+                />
               </div>
               <div>
                 <Label htmlFor="category">Category</Label>
-                <Select>
+                <Select
+                  value={newItem.category}
+                  onValueChange={(value) =>
+                    setNewItem({ ...newItem, category: value })
+                  }
+                >
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -51,11 +214,23 @@ const ShoppingList = () => {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <Label htmlFor="quantity">Quantity</Label>
-                <Input id="quantity" type="number" className="mt-1" min="1" />
+                <Input
+                  id="quantity"
+                  type="number"
+                  min="1"
+                  value={newItem.quantity}
+                  onChange={(e) =>
+                    setNewItem({ ...newItem, quantity: Number(e.target.value) })
+                  }
+                  className="mt-1"
+                />
               </div>
               <div>
                 <Label htmlFor="unit">Unit</Label>
-                <Select>
+                <Select
+                  value={newItem.unit}
+                  onValueChange={(value) => setNewItem({ ...newItem, unit: value })}
+                >
                   <SelectTrigger className="mt-1">
                     <SelectValue placeholder="Select unit" />
                   </SelectTrigger>
@@ -69,54 +244,50 @@ const ShoppingList = () => {
                 </Select>
               </div>
             </div>
+            <Button onClick={handleAddItem} className="mt-2">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Item
+            </Button>
           </div>
 
-          {/* Shopping List */}
           <div className="space-y-6">
-            {/* Categories */}
-            <div className="space-y-4">
-              <h2 className="font-playfair text-xl font-semibold text-charcoal">
-                Produce
-              </h2>
-              <div className="space-y-2">
-                <div className="flex items-center gap-4 rounded-lg border p-3">
-                  <Checkbox id="item-1" />
-                  <Label htmlFor="item-1" className="flex-1">
-                    Tomatoes
-                  </Label>
-                  <span className="text-sm text-gray-600">2 pieces</span>
-                </div>
-                <div className="flex items-center gap-4 rounded-lg border p-3">
-                  <Checkbox id="item-2" />
-                  <Label htmlFor="item-2" className="flex-1">
-                    Onions
-                  </Label>
-                  <span className="text-sm text-gray-600">3 pieces</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h2 className="font-playfair text-xl font-semibold text-charcoal">
-                Dairy
-              </h2>
-              <div className="space-y-2">
-                <div className="flex items-center gap-4 rounded-lg border p-3">
-                  <Checkbox id="item-3" />
-                  <Label htmlFor="item-3" className="flex-1">
-                    Milk
-                  </Label>
-                  <span className="text-sm text-gray-600">1 liter</span>
-                </div>
-                <div className="flex items-center gap-4 rounded-lg border p-3">
-                  <Checkbox id="item-4" />
-                  <Label htmlFor="item-4" className="flex-1">
-                    Cheese
-                  </Label>
-                  <span className="text-sm text-gray-600">200 grams</span>
+            {Object.entries(
+              (shoppingList?.items || []).reduce((acc, item) => {
+                acc[item.category] = [...(acc[item.category] || []), item];
+                return acc;
+              }, {} as Record<string, ShoppingItem[]>)
+            ).map(([category, items]) => (
+              <div key={category} className="space-y-4">
+                <h2 className="font-playfair text-xl font-semibold text-charcoal capitalize">
+                  {category}
+                </h2>
+                <div className="space-y-2">
+                  {items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-4 rounded-lg border p-3"
+                    >
+                      <Checkbox
+                        id={item.id}
+                        checked={item.completed}
+                        onCheckedChange={() => handleToggleItem(item.id)}
+                      />
+                      <Label
+                        htmlFor={item.id}
+                        className={`flex-1 ${
+                          item.completed ? "line-through text-gray-400" : ""
+                        }`}
+                      >
+                        {item.name}
+                      </Label>
+                      <span className="text-sm text-gray-600">
+                        {item.quantity} {item.unit}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
