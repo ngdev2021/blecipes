@@ -44,8 +44,8 @@ const AllRecipes = () => {
           );
         }
 
-        if (collection) {
-          // Fix: Use proper JSONB array containment check
+        // Only apply collection filter to recipes table
+        if (collection && activeTab === "recipes") {
           query = query.contains('categories', JSON.stringify([collection]));
         }
 
