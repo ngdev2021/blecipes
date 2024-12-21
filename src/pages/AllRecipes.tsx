@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { FilterSheet } from "@/components/recipes/FilterSheet";
 import { RecipeGrid } from "@/components/recipes/RecipeGrid";
 import { RecipeTypeTabs } from "@/components/recipes/RecipeTypeTabs";
+import { RecipeListControls } from "@/components/recipes/RecipeListControls";
+import { FeaturedRecipes } from "@/components/recipes/FeaturedRecipes";
 
 type RecipeType = "recipes" | "sides" | "drinks" | "sauces" | "seasoning_blends";
 
@@ -21,21 +23,25 @@ const AllRecipes = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState<RecipeType>("recipes");
   const [filters, setFilters] = useState<Filters>({});
+  const [view, setView] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState("newest");
   const navigate = useNavigate();
   const { toast } = useToast();
   const searchQuery = searchParams.get("search") || "";
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ["culinary-items", activeTab, searchQuery, filters],
+    queryKey: ["culinary-items", activeTab, searchQuery, filters, sortBy],
     queryFn: async () => {
       try {
         let query = supabase.from(activeTab).select("*");
 
         if (searchQuery) {
-          query = query.ilike(activeTab === "recipes" ? "title" : "name", `%${searchQuery}%`);
+          query = query.ilike(
+            activeTab === "recipes" ? "title" : "name",
+            `%${searchQuery}%`
+          );
         }
 
-        // Only apply these filters for the recipes table
         if (activeTab === "recipes") {
           if (filters.difficulty) {
             query = query.eq("difficulty", filters.difficulty);
@@ -56,7 +62,25 @@ const AllRecipes = () => {
           }
 
           if (filters.dietaryRestrictions?.length) {
-            query = query.contains("dietary_restrictions", filters.dietaryRestrictions);
+            query = query.contains(
+              "dietary_restrictions",
+              filters.dietaryRestrictions
+            );
+          }
+
+          // Add sorting
+          switch (sortBy) {
+            case "oldest":
+              query = query.order("created_at", { ascending: true });
+              break;
+            case "popular":
+              query = query.order("total_time", { ascending: false }); // This should be replaced with actual popularity metric
+              break;
+            case "rating":
+              query = query.order("rating", { ascending: false }); // This should be replaced with actual rating calculation
+              break;
+            default: // newest
+              query = query.order("created_at", { ascending: false });
           }
         }
 
@@ -83,7 +107,9 @@ const AllRecipes = () => {
     },
   });
 
-  const getTimeRangeValues = (range: string): [number | undefined, number | undefined] => {
+  const getTimeRangeValues = (
+    range: string
+  ): [number | undefined, number | undefined] => {
     switch (range) {
       case "< 30 mins":
         return [undefined, 30];
@@ -101,11 +127,19 @@ const AllRecipes = () => {
   };
 
   const handleFilterChange = (type: keyof Filters, value: any) => {
-    setFilters(prev => ({
+    setFilters((prev) => ({
       ...prev,
-      [type]: value
+      [type]: value,
     }));
   };
+
+  // Mock featured recipes (in production, this would come from the backend)
+  const featuredRecipes = items
+    ?.slice(0, 3)
+    .map((item: any) => ({
+      ...item,
+      time: item.total_time ? `${item.total_time} mins` : "N/A",
+    }));
 
   return (
     <div className="min-h-screen bg-cream px-4 py-8">
@@ -113,22 +147,36 @@ const AllRecipes = () => {
         <h1 className="mb-8 text-center font-playfair text-4xl font-bold text-charcoal">
           Culinary Collection
         </h1>
+
         <div className="mb-8 flex items-center gap-4">
           <div className="flex-1">
             <SearchBar onSearch={handleSearch} initialQuery={searchQuery} />
           </div>
-          <FilterSheet 
-            filters={filters} 
+          <FilterSheet
+            filters={filters}
             onFilterChange={handleFilterChange}
             onClearFilters={() => setFilters({})}
           />
         </div>
 
-        <RecipeTypeTabs 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-        >
-          <RecipeGrid items={items} isLoading={isLoading} />
+        {featuredRecipes && featuredRecipes.length > 0 && (
+          <FeaturedRecipes recipes={featuredRecipes} />
+        )}
+
+        <RecipeTypeTabs activeTab={activeTab} onTabChange={setActiveTab}>
+          <div className="mb-6">
+            <RecipeListControls
+              view={view}
+              onViewChange={setView}
+              sortBy={sortBy}
+              onSortChange={setSortBy}
+            />
+          </div>
+          <RecipeGrid
+            items={items}
+            isLoading={isLoading}
+            view={view}
+          />
         </RecipeTypeTabs>
       </div>
     </div>

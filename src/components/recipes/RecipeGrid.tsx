@@ -27,9 +27,10 @@ interface NamedItem extends BaseItem {
 interface RecipeGridProps {
   items: (Recipe | NamedItem)[] | undefined;
   isLoading: boolean;
+  view?: "grid" | "list";
 }
 
-export const RecipeGrid = ({ items, isLoading }: RecipeGridProps) => {
+export const RecipeGrid = ({ items, isLoading, view = "grid" }: RecipeGridProps) => {
   const getItemTitle = (item: Recipe | NamedItem): string => {
     if ("title" in item) return item.title;
     if ("name" in item) return item.name;
@@ -37,11 +38,10 @@ export const RecipeGrid = ({ items, isLoading }: RecipeGridProps) => {
   };
 
   const getItemTime = (item: Recipe | NamedItem): string => {
-    if ("total_time" in item && item.total_time) 
-      return `${item.total_time} mins`;
-    if ("preparation_time" in item && item.preparation_time) 
+    if ("total_time" in item && item.total_time) return `${item.total_time} mins`;
+    if ("preparation_time" in item && item.preparation_time)
       return `${item.preparation_time} mins`;
-    if ("cooking_time" in item && item.cooking_time) 
+    if ("cooking_time" in item && item.cooking_time)
       return `${item.cooking_time} mins`;
     return "N/A";
   };
@@ -59,10 +59,10 @@ export const RecipeGrid = ({ items, isLoading }: RecipeGridProps) => {
   const getItemCategories = (item: Recipe | NamedItem): string[] => {
     if ("categories" in item && item.categories) {
       if (Array.isArray(item.categories)) {
-        return item.categories.map(cat => String(cat));
+        return item.categories.map((cat) => String(cat));
       }
-      if (typeof item.categories === 'object') {
-        return Object.values(item.categories as object).map(cat => String(cat));
+      if (typeof item.categories === "object") {
+        return Object.values(item.categories as object).map((cat) => String(cat));
       }
     }
     return [];
@@ -90,7 +90,13 @@ export const RecipeGrid = ({ items, isLoading }: RecipeGridProps) => {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div
+      className={
+        view === "grid"
+          ? "grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+          : "space-y-4"
+      }
+    >
       {items.map((item) => (
         <RecipeCard
           key={item.id}
@@ -102,6 +108,7 @@ export const RecipeGrid = ({ items, isLoading }: RecipeGridProps) => {
           difficulty={getItemDifficulty(item)}
           categories={getItemCategories(item)}
           servings={getItemServings(item)}
+          layout={view}
         />
       ))}
     </div>
