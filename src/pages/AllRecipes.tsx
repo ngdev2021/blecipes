@@ -9,6 +9,7 @@ import { RecipeGrid } from "@/components/recipes/RecipeGrid";
 import { RecipeTypeTabs } from "@/components/recipes/RecipeTypeTabs";
 import { RecipeListControls } from "@/components/recipes/RecipeListControls";
 import { FeaturedRecipes } from "@/components/recipes/FeaturedRecipes";
+import { RecipeCollections } from "@/components/recipes/RecipeCollections";
 
 type RecipeType = "recipes" | "sides" | "drinks" | "sauces" | "seasoning_blends";
 
@@ -28,9 +29,10 @@ const AllRecipes = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const searchQuery = searchParams.get("search") || "";
+  const collection = searchParams.get("collection");
 
   const { data: items, isLoading } = useQuery({
-    queryKey: ["culinary-items", activeTab, searchQuery, filters, sortBy],
+    queryKey: ["culinary-items", activeTab, searchQuery, filters, sortBy, collection],
     queryFn: async () => {
       try {
         let query = supabase.from(activeTab).select("*");
@@ -40,6 +42,10 @@ const AllRecipes = () => {
             activeTab === "recipes" ? "title" : "name",
             `%${searchQuery}%`
           );
+        }
+
+        if (collection) {
+          query = query.contains("categories", [collection]);
         }
 
         if (activeTab === "recipes") {
@@ -68,18 +74,17 @@ const AllRecipes = () => {
             );
           }
 
-          // Add sorting
           switch (sortBy) {
             case "oldest":
               query = query.order("created_at", { ascending: true });
               break;
             case "popular":
-              query = query.order("total_time", { ascending: false }); // This should be replaced with actual popularity metric
+              query = query.order("total_time", { ascending: false });
               break;
             case "rating":
-              query = query.order("rating", { ascending: false }); // This should be replaced with actual rating calculation
+              query = query.order("rating", { ascending: false });
               break;
-            default: // newest
+            default:
               query = query.order("created_at", { ascending: false });
           }
         }
@@ -133,7 +138,6 @@ const AllRecipes = () => {
     }));
   };
 
-  // Mock featured recipes (in production, this would come from the backend)
   const featuredRecipes = items
     ?.slice(0, 3)
     .map((item: any) => ({
@@ -159,7 +163,9 @@ const AllRecipes = () => {
           />
         </div>
 
-        {featuredRecipes && featuredRecipes.length > 0 && (
+        {!searchQuery && !collection && <RecipeCollections />}
+
+        {featuredRecipes && featuredRecipes.length > 0 && !searchQuery && !collection && (
           <FeaturedRecipes recipes={featuredRecipes} />
         )}
 
