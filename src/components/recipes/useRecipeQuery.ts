@@ -27,7 +27,12 @@ export function useRecipeQuery({ activeTab, searchQuery, collection }: UseRecipe
         query = query.contains('categories', [collection]);
       }
 
-      const { data, error } = await query.order("created_at", { ascending: false });
+      // Only order by created_at for tables that have this column
+      if (activeTab === "recipes") {
+        query = query.order("created_at", { ascending: false });
+      }
+
+      const { data, error } = await query;
 
       if (error) {
         throw error;
