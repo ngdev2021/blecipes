@@ -8,6 +8,10 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AllRecipes from "./pages/AllRecipes";
 import RecipeDetail from "./pages/RecipeDetail";
+import AddEditRecipe from "./pages/AddEditRecipe";
+import Profile from "./pages/Profile";
+import ShoppingList from "./pages/ShoppingList";
+import MealPlanner from "./pages/MealPlanner";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +45,46 @@ const App = () => {
               element={
                 <ProtectedRoute>
                   <RecipeDetail />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recipe/new"
+              element={
+                <ProtectedRoute>
+                  <AddEditRecipe />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/recipe/edit/:id"
+              element={
+                <ProtectedRoute>
+                  <AddEditRecipe />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/shopping-list"
+              element={
+                <ProtectedRoute>
+                  <ShoppingList />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/meal-planner"
+              element={
+                <ProtectedRoute>
+                  <MealPlanner />
                 </ProtectedRoute>
               }
             />
