@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ChefHat, Clock, Leaf, Fire, Coffee, Cake } from "lucide-react";
+import { ChefHat, Clock, Leaf, Flame, Coffee, Cake } from "lucide-react";
 import { Link } from "react-router-dom";
 
 interface Collection {
@@ -29,7 +29,7 @@ const collections: Collection[] = [
     id: "spicy",
     name: "Spicy",
     description: "Hot and flavorful dishes",
-    icon: <Fire className="h-6 w-6" />,
+    icon: <Flame className="h-6 w-6" />,
     count: 12,
   },
   {
