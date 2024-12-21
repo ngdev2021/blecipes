@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { Layout } from "@/components/layout/Layout";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AllRecipes from "./pages/AllRecipes";
@@ -28,7 +29,9 @@ const App = () => {
               path="/"
               element={
                 <ProtectedRoute>
-                  <Index />
+                  <Layout>
+                    <Index />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -36,7 +39,9 @@ const App = () => {
               path="/recipes"
               element={
                 <ProtectedRoute>
-                  <AllRecipes />
+                  <Layout>
+                    <AllRecipes />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -44,7 +49,9 @@ const App = () => {
               path="/recipe/:id"
               element={
                 <ProtectedRoute>
-                  <RecipeDetail />
+                  <Layout>
+                    <RecipeDetail />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -52,7 +59,9 @@ const App = () => {
               path="/recipe/new"
               element={
                 <ProtectedRoute>
-                  <AddEditRecipe />
+                  <Layout>
+                    <AddEditRecipe />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -60,7 +69,9 @@ const App = () => {
               path="/recipe/edit/:id"
               element={
                 <ProtectedRoute>
-                  <AddEditRecipe />
+                  <Layout>
+                    <AddEditRecipe />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -68,7 +79,9 @@ const App = () => {
               path="/profile"
               element={
                 <ProtectedRoute>
-                  <Profile />
+                  <Layout>
+                    <Profile />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -76,7 +89,9 @@ const App = () => {
               path="/shopping-list"
               element={
                 <ProtectedRoute>
-                  <ShoppingList />
+                  <Layout>
+                    <ShoppingList />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
@@ -84,7 +99,9 @@ const App = () => {
               path="/meal-planner"
               element={
                 <ProtectedRoute>
-                  <MealPlanner />
+                  <Layout>
+                    <MealPlanner />
+                  </Layout>
                 </ProtectedRoute>
               }
             />
