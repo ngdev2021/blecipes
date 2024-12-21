@@ -45,7 +45,8 @@ const AllRecipes = () => {
         }
 
         if (collection) {
-          query = query.contains("categories", [collection]);
+          // Fix: Use containedBy operator for JSONB array filtering
+          query = query.contains('categories', [collection]);
         }
 
         if (activeTab === "recipes") {
