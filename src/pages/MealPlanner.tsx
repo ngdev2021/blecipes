@@ -66,15 +66,47 @@ const MealPlanner = () => {
   const { data: mealPlan, isLoading: isLoadingMealPlan } = useQuery({
     queryKey: ["mealPlan", user?.id],
     queryFn: async () => {
+      if (!user?.id) return null;
+
       const { data, error } = await supabase
         .from("meal_plans")
         .select("*")
-        .eq("user_id", user?.id)
-        .single();
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (error) throw error;
-      return data as MealPlan;
+      if (error && error.code !== "PGRST116") throw error;
+      
+      // If no meal plan exists, create a default one
+      if (!data) {
+        const defaultMealPlan = {
+          user_id: user.id,
+          recipes: {},
+          schedule: {
+            start_date: new Date().toISOString(),
+            end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+        };
+
+        const { data: newPlan, error: createError } = await supabase
+          .from("meal_plans")
+          .insert(defaultMealPlan)
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        return newPlan as MealPlan;
+      }
+
+      return {
+        ...data,
+        recipes: data.recipes || {},
+        schedule: data.schedule || {
+          start_date: new Date().toISOString(),
+          end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        },
+      } as MealPlan;
     },
+    enabled: !!user?.id,
   });
 
   const { data: recipes } = useQuery({
@@ -91,12 +123,12 @@ const MealPlanner = () => {
 
   const updateMealPlanMutation = useMutation({
     mutationFn: async (newRecipeId: number) => {
-      if (!selectedDay || !selectedMeal) return;
+      if (!selectedDay || !selectedMeal || !user?.id || !mealPlan) return;
 
       const updatedRecipes = {
-        ...mealPlan?.recipes,
+        ...mealPlan.recipes,
         [selectedDay]: {
-          ...(mealPlan?.recipes?.[selectedDay] || {}),
+          ...(mealPlan.recipes[selectedDay] || {}),
           [selectedMeal]: newRecipeId,
         },
       };
@@ -104,12 +136,10 @@ const MealPlanner = () => {
       const { error } = await supabase
         .from("meal_plans")
         .upsert({
-          user_id: user?.id,
+          id: mealPlan.id,
+          user_id: user.id,
           recipes: updatedRecipes,
-          schedule: mealPlan?.schedule || {
-            start_date: new Date().toISOString(),
-            end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-          },
+          schedule: mealPlan.schedule,
         });
 
       if (error) throw error;
@@ -123,6 +153,8 @@ const MealPlanner = () => {
   });
 
   const generateMealPlan = async () => {
+    if (!user?.id || !mealPlan || !recipes?.length) return;
+
     toast({
       title: "Generating meal plan",
       description: "AI is creating your personalized meal plan...",
@@ -130,8 +162,6 @@ const MealPlanner = () => {
 
     // Simulate AI generation delay
     await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    if (!recipes) return;
 
     const newMealPlan: { [key: string]: any } = {};
     days.forEach((day) => {
@@ -145,12 +175,10 @@ const MealPlanner = () => {
     const { error } = await supabase
       .from("meal_plans")
       .upsert({
-        user_id: user?.id,
+        id: mealPlan.id,
+        user_id: user.id,
         recipes: newMealPlan,
-        schedule: {
-          start_date: new Date().toISOString(),
-          end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        },
+        schedule: mealPlan.schedule,
       });
 
     if (error) {
@@ -187,7 +215,11 @@ const MealPlanner = () => {
           <h1 className="font-playfair text-3xl font-bold text-charcoal">
             Meal Planner
           </h1>
-          <Button onClick={generateMealPlan} className="gap-2">
+          <Button 
+            onClick={generateMealPlan} 
+            className="gap-2"
+            disabled={!recipes?.length}
+          >
             <Wand2 className="h-4 w-4" />
             Generate AI Meal Plan
           </Button>

@@ -29,7 +29,7 @@ interface ShoppingList {
   id: number;
   user_id: string;
   items: ShoppingItem[];
-  status: "active" | "completed";
+  status: string;
 }
 
 const ShoppingList = () => {
@@ -45,25 +45,53 @@ const ShoppingList = () => {
   const { data: shoppingList, isLoading } = useQuery({
     queryKey: ["shoppingList", user?.id],
     queryFn: async () => {
+      if (!user?.id) return null;
+
       const { data, error } = await supabase
         .from("shopping_lists")
         .select("*")
-        .eq("user_id", user?.id)
+        .eq("user_id", user.id)
         .eq("status", "active")
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== "PGRST116") throw error;
-      return data as ShoppingList;
+
+      // If no shopping list exists, create a default one
+      if (!data) {
+        const defaultList = {
+          user_id: user.id,
+          items: [],
+          status: "active",
+        };
+
+        const { data: newList, error: createError } = await supabase
+          .from("shopping_lists")
+          .insert(defaultList)
+          .select()
+          .single();
+
+        if (createError) throw createError;
+        return { ...newList, items: [] } as ShoppingList;
+      }
+
+      return {
+        ...data,
+        items: (data.items || []) as ShoppingItem[],
+      } as ShoppingList;
     },
+    enabled: !!user?.id,
   });
 
   const updateShoppingListMutation = useMutation({
     mutationFn: async (items: ShoppingItem[]) => {
+      if (!user?.id || !shoppingList) return;
+
       const { error } = await supabase
         .from("shopping_lists")
         .upsert({
-          user_id: user?.id,
-          items,
+          id: shoppingList.id,
+          user_id: user.id,
+          items: items,
           status: "active",
         });
 
