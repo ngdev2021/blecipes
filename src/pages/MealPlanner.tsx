@@ -17,51 +17,27 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { CookingPot, Plus, Wand2 } from "lucide-react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { MealPlan, Recipe, MealType, DayOfWeek } from "@/types/meal-planner";
 
-interface MealPlan {
-  id: number;
-  user_id: string;
-  recipes: {
-    [key: string]: {
-      breakfast?: number;
-      lunch?: number;
-      dinner?: number;
-    };
-  };
-  schedule: {
-    start_date: string;
-    end_date: string;
-  };
-}
-
-interface Recipe {
-  id: number;
-  title: string;
-  description: string;
-  prep_time: number;
-  cook_time: number;
-  difficulty: string;
-  categories: string[];
-}
+const DAYS: DayOfWeek[] = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];
 
 const MealPlanner = () => {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [selectedMeal, setSelectedMeal] = useState<string | null>(null);
-
-  const days = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday",
-  ];
+  const queryClient = useQueryClient();
+  const [selectedDay, setSelectedDay] = useState<DayOfWeek | null>(null);
+  const [selectedMeal, setSelectedMeal] = useState<MealType | null>(null);
 
   const { data: mealPlan, isLoading: isLoadingMealPlan } = useQuery({
     queryKey: ["mealPlan", user?.id],
@@ -94,13 +70,18 @@ const MealPlanner = () => {
           .single();
 
         if (createError) throw createError;
-        return newPlan as MealPlan;
+        
+        return {
+          ...newPlan,
+          recipes: {},
+          schedule: defaultMealPlan.schedule,
+        } as MealPlan;
       }
 
       return {
         ...data,
-        recipes: data.recipes || {},
-        schedule: data.schedule || {
+        recipes: data.recipes as MealPlan["recipes"] || {},
+        schedule: data.schedule as MealPlan["schedule"] || {
           start_date: new Date().toISOString(),
           end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         },
@@ -135,20 +116,28 @@ const MealPlanner = () => {
 
       const { error } = await supabase
         .from("meal_plans")
-        .upsert({
-          id: mealPlan.id,
-          user_id: user.id,
+        .update({
           recipes: updatedRecipes,
-          schedule: mealPlan.schedule,
-        });
+        })
+        .eq("id", mealPlan.id)
+        .eq("user_id", user.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mealPlan", user?.id] });
       toast({
         title: "Meal plan updated",
         description: "Your meal plan has been successfully updated.",
       });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error updating meal plan",
+        description: "Failed to update meal plan. Please try again.",
+        variant: "destructive",
+      });
+      console.error("Error updating meal plan:", error);
     },
   });
 
@@ -160,40 +149,39 @@ const MealPlanner = () => {
       description: "AI is creating your personalized meal plan...",
     });
 
-    // Simulate AI generation delay
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-    const newMealPlan: { [key: string]: any } = {};
-    days.forEach((day) => {
-      newMealPlan[day] = {
-        breakfast: recipes[Math.floor(Math.random() * recipes.length)].id,
-        lunch: recipes[Math.floor(Math.random() * recipes.length)].id,
-        dinner: recipes[Math.floor(Math.random() * recipes.length)].id,
-      };
-    });
-
-    const { error } = await supabase
-      .from("meal_plans")
-      .upsert({
-        id: mealPlan.id,
-        user_id: user.id,
-        recipes: newMealPlan,
-        schedule: mealPlan.schedule,
+    try {
+      const newMealPlan: MealPlan["recipes"] = {};
+      DAYS.forEach((day) => {
+        newMealPlan[day] = {
+          breakfast: recipes[Math.floor(Math.random() * recipes.length)].id,
+          lunch: recipes[Math.floor(Math.random() * recipes.length)].id,
+          dinner: recipes[Math.floor(Math.random() * recipes.length)].id,
+        };
       });
 
-    if (error) {
+      const { error } = await supabase
+        .from("meal_plans")
+        .update({
+          recipes: newMealPlan,
+        })
+        .eq("id", mealPlan.id)
+        .eq("user_id", user.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["mealPlan", user?.id] });
+      toast({
+        title: "Success",
+        description: "Your AI-generated meal plan is ready!",
+      });
+    } catch (error) {
       toast({
         title: "Error",
         description: "Failed to generate meal plan. Please try again.",
         variant: "destructive",
       });
-      return;
+      console.error("Error generating meal plan:", error);
     }
-
-    toast({
-      title: "Success",
-      description: "Your AI-generated meal plan is ready!",
-    });
   };
 
   const getRecipeTitle = (recipeId: number) => {
@@ -226,7 +214,7 @@ const MealPlanner = () => {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {days.map((day) => (
+          {DAYS.map((day) => (
             <Card key={day}>
               <CardHeader>
                 <CardTitle>{day}</CardTitle>
@@ -234,7 +222,7 @@ const MealPlanner = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {["breakfast", "lunch", "dinner"].map((meal) => (
+                  {(["breakfast", "lunch", "dinner"] as MealType[]).map((meal) => (
                     <div key={meal} className="rounded-lg border p-4">
                       <div className="mb-2 flex items-center justify-between">
                         <h3 className="font-medium capitalize">{meal}</h3>
@@ -279,7 +267,7 @@ const MealPlanner = () => {
                         <CookingPot className="h-4 w-4 text-sage" />
                         <span className="text-sm">
                           {mealPlan?.recipes?.[day]?.[meal]
-                            ? getRecipeTitle(mealPlan.recipes[day][meal])
+                            ? getRecipeTitle(mealPlan.recipes[day][meal]!)
                             : "No meal planned"}
                         </span>
                       </div>
