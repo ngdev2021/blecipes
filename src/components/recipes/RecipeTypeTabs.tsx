@@ -1,6 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-type RecipeType = "recipes" | "sides" | "drinks" | "sauces" | "seasoning_blends";
+export type RecipeType = "recipes" | "sides" | "drinks" | "sauces" | "seasoning_blends";
 
 interface RecipeTypeTabsProps {
   activeTab: RecipeType;

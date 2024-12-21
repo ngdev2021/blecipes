@@ -16,6 +16,8 @@ interface FilterSheetProps {
   filters: Filters;
   onFilterChange: (type: keyof Filters, value: any) => void;
   onClearFilters: () => void;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const difficultyOptions = ["easy", "medium", "hard"];
@@ -23,9 +25,9 @@ const timeRangeOptions = ["< 30 mins", "30-60 mins", "> 60 mins"];
 const categoryOptions = ["Breakfast", "Lunch", "Dinner", "Dessert", "Snack", "Appetizer"];
 const dietaryOptions = ["Vegetarian", "Vegan", "Gluten-Free", "Dairy-Free", "Nut-Free"];
 
-export const FilterSheet = ({ filters, onFilterChange, onClearFilters }: FilterSheetProps) => {
+export const FilterSheet = ({ filters, onFilterChange, onClearFilters, isOpen, onOpenChange }: FilterSheetProps) => {
   return (
-    <Sheet>
+    <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetTrigger asChild>
         <Button variant="outline" className="flex items-center gap-2">
           <SlidersHorizontal className="h-4 w-4" />

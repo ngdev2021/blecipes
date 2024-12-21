@@ -4,25 +4,40 @@ import { RecipeFilters } from "@/components/recipes/RecipeFilters";
 import { RecipeGrid } from "@/components/recipes/RecipeGrid";
 import { useRecipeQuery } from "@/components/recipes/useRecipeQuery";
 import { useSearchParams } from "react-router-dom";
+import { RecipeType } from "@/components/recipes/RecipeTypeTabs";
 
 export default function AllRecipes() {
   const [searchParams] = useSearchParams();
   const collection = searchParams.get("collection");
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("recipes");
+  const [activeTab, setActiveTab] = useState<RecipeType>("recipes");
   const [showFilters, setShowFilters] = useState(false);
+  const [filters, setFilters] = useState({
+    difficulty: undefined,
+    timeRange: undefined,
+    categories: [],
+    dietaryRestrictions: [],
+  });
 
-  const { data: recipes, isLoading, error } = useRecipeQuery({
+  const { data: items, isLoading } = useRecipeQuery({
     activeTab,
     searchQuery,
     collection,
   });
 
-  if (error) {
-    console.error("Error fetching recipes:", error);
-    return <div>Error loading recipes</div>;
-  }
+  const handleFilterChange = (type: keyof typeof filters, value: any) => {
+    setFilters(prev => ({ ...prev, [type]: value }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      difficulty: undefined,
+      timeRange: undefined,
+      categories: [],
+      dietaryRestrictions: [],
+    });
+  };
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -42,9 +57,15 @@ export default function AllRecipes() {
         setShowFilters={setShowFilters}
       />
 
-      <FilterSheet open={showFilters} onOpenChange={setShowFilters} />
+      <FilterSheet
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onClearFilters={handleClearFilters}
+        isOpen={showFilters}
+        onOpenChange={setShowFilters}
+      />
 
-      <RecipeGrid recipes={recipes || []} isLoading={isLoading} />
+      <RecipeGrid items={items} isLoading={isLoading} />
     </div>
   );
 }

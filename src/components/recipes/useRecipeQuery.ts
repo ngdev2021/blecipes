@@ -1,8 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import { RecipeType } from "./RecipeTypeTabs";
 
 interface UseRecipeQueryProps {
-  activeTab: string;
+  activeTab: RecipeType;
   searchQuery: string;
   collection?: string;
 }
@@ -14,12 +15,16 @@ export function useRecipeQuery({ activeTab, searchQuery, collection }: UseRecipe
       let query = supabase.from(activeTab).select("*");
 
       if (searchQuery) {
-        query = query.ilike("name", `%${searchQuery}%`);
+        if (activeTab === "recipes") {
+          query = query.ilike("title", `%${searchQuery}%`);
+        } else {
+          query = query.ilike("name", `%${searchQuery}%`);
+        }
       }
 
       // Only apply collection filter to recipes table
       if (collection && activeTab === "recipes") {
-        query = query.contains('categories', JSON.stringify([collection]));
+        query = query.contains('categories', [collection]);
       }
 
       const { data, error } = await query.order("created_at", { ascending: false });

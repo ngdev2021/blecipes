@@ -1,13 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { FilterSheet } from "./FilterSheet";
-import { RecipeTypeTabs } from "./RecipeTypeTabs";
+import { RecipeType, RecipeTypeTabs } from "./RecipeTypeTabs";
 
 interface RecipeFiltersProps {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  activeTab: string;
-  setActiveTab: (tab: string) => void;
+  activeTab: RecipeType;
+  setActiveTab: (tab: RecipeType) => void;
   showFilters: boolean;
   setShowFilters: (show: boolean) => void;
 }
@@ -38,7 +37,9 @@ export function RecipeFilters({
           Filters
         </Button>
       </div>
-      <RecipeTypeTabs value={activeTab} onValueChange={setActiveTab} />
+      <RecipeTypeTabs activeTab={activeTab} onTabChange={setActiveTab}>
+        {/* Content will be rendered in parent component */}
+      </RecipeTypeTabs>
     </div>
   );
 }
