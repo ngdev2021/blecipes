@@ -37,8 +37,11 @@ export function RecipeFilters({
           Filters
         </Button>
       </div>
-      <RecipeTypeTabs activeTab={activeTab} onTabChange={setActiveTab}>
-        {/* Content will be rendered in parent component */}
+      <RecipeTypeTabs
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      >
+        <div /> {/* Empty div as children to satisfy the type requirement */}
       </RecipeTypeTabs>
     </div>
   );
