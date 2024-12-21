@@ -1,6 +1,7 @@
 import { Json } from "@/integrations/supabase/types";
 
-export interface ShoppingItem {
+// Make ShoppingItem compatible with Json by extending Record<string, Json>
+export interface ShoppingItem extends Record<string, Json> {
   id: string;
   name: string;
   category: string;
